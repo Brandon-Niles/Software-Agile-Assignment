@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Management Dashboard</title>
+    <style>
+        /* Dark Mode Styles */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #333;
+            color: #fff;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .dashboard {
+            background-color: #444;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+            padding: 20px;
+            width: 90%;
+            max-width: 1200px;
+        }
+        .task-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        .task-table th, .task-table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #666;
+        }
+        .task-table th {
+            background-color: #555;
+            color: #fff;
+        }
+        .status-color {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            margin-right: 5px;
+            border-radius: 50%;
+        }
+        .status-Pending { background-color: orange; }
+        .status-Running { background-color: blue; }
+        .status-Success { background-color: green; }
+        .status-Failed { background-color: red; }
+        .status-Retrying { background-color: yellow; }
+        .cancel-button {
+            background-color: #d32f2f;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .cancel-button:hover {
+            background-color: #f44336;
+        }
+        .admin-badge {
+            background-color: #2196F3;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            margin-left: 10px;
+        }
+        .location-china {
+            font-weight: bold;
+            color: yellow; /* Highlight China */
+        }
+        .row-china {
+            background-color: rgba(255, 0, 0, 0.2); /* Highlight row in red */
+        }
+        .filter-container {
+            margin-bottom: 10px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .filter-container label {
+            color: #fff;
+        }
+        .filter-select {
+            background-color: #555;
+            color: #fff;
+            border: none;
+            padding: 8px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .filter-select:focus {
+            outline: none;
+            box-shadow: 0 0 5px rgba(81, 203, 238, 1);
+        }
+        .role-switch-button {
+            background-color: #2196F3;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            position: absolute;
+            top: 20px;
+            right: 20px;
+        }
+        .role-switch-button:hover {
+            background-color: #64b5f6;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <h1>Task Management Dashboard
+            <span id="admin-badge" class="admin-badge">Admin</span>
+        </h1>
+        <button class="role-switch-button" onclick="toggleRole()">Switch Role</button>
+
+        <div class="filter-container">
+            <label for="countryFilter">Filter by Country:</label>
+            <select id="countryFilter" class="filter-select" onchange="updateDashboard()">
+                <option value="">All</option>
+                <option value="USA">USA</option>
+                <option value="Germany">Germany</option>
+                <option value="China">China</option>
+                <option value="Netherlands">Netherlands</option>
+                <option value="UK">UK</option>
+                <option value="India">India</option>
+            </select>
+
+            <label for="platformFilter">Filter by Platform:</label>
+            <select id="platformFilter" class="filter-select" onchange="updateDashboard()">
+                <option value="">All</option>
+                <option value="GCP">GCP</option>
+                <option value="AWS">AWS</option>
+                <option value="VMware">VMware</option>
+                <option value="Azure">Azure</option>
+            </select>
+
+            <label for="statusFilter">Filter by Status:</label>
+            <select id="statusFilter" class="filter-select" onchange="updateDashboard()">
+                <option value="">All</option>
+                <option value="Pending">Pending</option>
+                <option value="Running">Running</option>
+                <option value="Success">Success</option>
+                <option value="Failed">Failed</option>
+                <option value="Retrying">Retrying</option>
+            </select>
+        </div>
+
+        <table class="task-table">
+            <thead>
+                <tr>
+                    <th>Task Name</th>
+                    <th>Status</th>
+                    <th>Platform</th>
+                    <th>Allowed Locations</th>
+                    <th>Controlling Leg</th>
+                    <th>Submitted</th>
+                    <th>Started</th>
+                    <th>Ended</th>
+                    <th>Elapsed Time</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="task-list">
+                <!-- Tasks will be dynamically added here -->
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        let userRole = "admin"; // Possible values: "admin", "user"
+
+        const tasks = [
+            { name: "Backup Database", status: "Pending", platform: "GCP", allowedLocations: "US-East", controllingLeg: "USA", submitted: new Date(), startTime: null, endTime: null, elapsed: 0 },
+            { name: "Deploy Application", status: "Running", platform: "AWS", allowedLocations: "US-West", controllingLeg: "USA", submitted: new Date(), startTime: new Date(), endTime: null, elapsed: 0 },
+            { name: "Send Email", status: "Success", platform: "VMware", allowedLocations: "Frankfurt", controllingLeg: "Germany", submitted: new Date(), startTime: new Date(), endTime: new Date(), elapsed: 5 },
+            { name: "Process Data", status: "Failed", platform: "GCP", allowedLocations: "EU-Central", controllingLeg: "Germany", submitted: new Date(), startTime: new Date(), endTime: new Date(), elapsed: 10 },
+            { name: "Sync Files", status: "Retrying", platform: "AWS", allowedLocations: "Asia-Pacific", controllingLeg: "China", submitted: new Date(), startTime: new Date(), endTime: null, elapsed: 0 },
+            { name: "Scale Web Servers", status: "Pending", platform: "Azure", allowedLocations: "West Europe", controllingLeg: "Netherlands", submitted: new Date(), startTime: null, endTime: null, elapsed: 0 },
+            { name: "Update Firewall Rules", status: "Running", platform: "GCP", allowedLocations: "US-Central", controllingLeg: "USA", submitted: new Date(), startTime: new Date(), endTime: null, elapsed: 0 },
+            { name: "Monitor System Usage", status: "Success", platform: "VMware", allowedLocations: "London", controllingLeg: "UK", submitted: new Date(), startTime: new Date(), endTime: new Date(), elapsed: 7 },
+            { name: "Run Compliance Scan", status: "Failed", platform: "AWS", allowedLocations: "Asia-South", controllingLeg: "India", submitted: new Date(), startTime: new Date(), endTime: new Date(), elapsed: 12 },
+            { name: "Restore Database Backup", status: "Retrying", platform: "Azure", allowedLocations: "East US", controllingLeg: "USA", submitted: new Date(), startTime: new Date(), endTime: null, elapsed: 0 }
+        ];
+
+        function updateDashboard() {
+            const taskList = document.getElementById("task-list");
+            taskList.innerHTML = "";
+
+            const countryFilter = document.getElementById("countryFilter").value;
+            const platformFilter = document.getElementById("platformFilter").value;
+            const statusFilter = document.getElementById("statusFilter").value;
+
+            tasks.forEach((task, index) => {
+                // Apply filters
+                if (countryFilter && task.controllingLeg !== countryFilter) return;
+                if (platformFilter && task.platform !== platformFilter) return;
+                if (statusFilter && task.status !== statusFilter) return;
+
+                // Update elapsed time if the task is running or retrying
+                if ((task.status === "Running" || task.status === "Retrying") && task.startTime) {
+                    task.elapsed = Math.floor((new Date() - task.startTime) / 1000);
+                }
+
+                const row = document.createElement("tr");
+                let actions = '';
+
+                // Determine actions based on user role
+                if (userRole === "admin") {
+                    actions = `<button class="cancel-button" onclick="cancelTask(${index})">Cancel</button>`;
+                } else {
+                    actions = "Read Only";
+                }
+
+                let controllingLegClass = task.controllingLeg === "China" ? "location-china" : "";
+                let rowClass = task.controllingLeg === "China" ? "row-china" : "";
+
+                row.className = rowClass; // Apply row highlighting
+
+                row.innerHTML = `
+                    <td>${task.name}</td>
+                    <td>
+                        <span class="status-color status-${task.status}"></span>
+                        ${task.status}
+                    </td>
+                    <td>${task.platform}</td>
+                    <td>${task.allowedLocations}</td>
+                    <td class="${controllingLegClass}">${task.controllingLeg}</td>
+                    <td>${task.submitted ? task.submitted.toLocaleTimeString() : "-"}</td>
+                    <td>${task.startTime ? task.startTime.toLocaleTimeString() : "-"}</td>
+                    <td>${task.endTime ? task.endTime.toLocaleTimeString() : "-"}</td>
+                    <td>${task.elapsed} seconds</td>
+                    <td>${actions}</td>
+                `;
+                taskList.appendChild(row);
+            });
+
+            // Update admin badge based on user role
+            const adminBadge = document.getElementById("admin-badge");
+            adminBadge.textContent = userRole.charAt(0).toUpperCase() + userRole.slice(1);
+        }
+
+        function cancelTask(index) {
+            tasks[index].status = "Failed";
+            tasks[index].endTime = new Date();
+            updateDashboard();
+        }
+
+        function toggleRole() {
+            userRole = userRole === "admin" ? "user" : "admin";
+            updateDashboard();
+        }
+
+        setInterval(updateDashboard, 1000);
+        updateDashboard(); // Initial call to populate the dashboard
+    </script>
+</body>
+</html>
