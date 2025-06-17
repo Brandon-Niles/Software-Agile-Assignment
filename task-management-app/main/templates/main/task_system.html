@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Task Management System</title>
+    <script>
+        function filterTable() {
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            const rows = document.querySelectorAll('#taskTable tbody tr');
+            rows.forEach(row => {
+                const text = row.innerText.toLowerCase();
+                row.style.display = text.includes(search) ? '' : 'none';
+            });
+        }
+    </script>
+</head>
+<body>
+    <h2>Task Management System</h2>
+    <form id="searchForm" method="get" autocomplete="off" onsubmit="return false;">
+        <label>Search:
+            <input id="searchInput" type="text" name="search" oninput="filterTable()">
+        </label>
+        <label>Start Date:
+            <input type="date" name="date" value="{{ date|default:'' }}" onchange="this.form.submit()">
+        </label>
+    </form>
+    <br>
+    <table id="taskTable" border="1" width="100%">
+        <thead>
+            <tr>
+                <th>Task ID</th>
+                <th>Name</th>
+                <th>
+                    <select name="location" form="searchForm" onchange="this.form.submit()" style="font-weight:bold; border:none; background:transparent;">
+                        <option value="">Location &#9662;</option>
+                        {% for loc in locations %}
+                            <option value="{{ loc }}" {% if loc == selected_location %}selected{% endif %}>{{ loc }}</option>
+                        {% endfor %}
+                    </select>
+                </th>
+                <th>Status</th>
+                <th>Start Time</th>
+                <th>End Time</th>
+                <th>
+                    <select name="platform" form="searchForm" onchange="this.form.submit()" style="font-weight:bold; border:none; background:transparent;">
+                        <option value="">Platform &#9662;</option>
+                        {% for plat in platforms %}
+                            <option value="{{ plat }}" {% if plat == selected_platform %}selected{% endif %}>{{ plat }}</option>
+                        {% endfor %}
+                    </select>
+                </th>
+                <th>Retries</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for task in tasks %}
+            <tr>
+                <td>{{ task.id }}</td>
+                <td>{{ task.name }}</td>
+                <td>{{ task.location }}</td>
+                <td>{{ task.status }}</td>
+                <td>{{ task.start_time }}</td>
+                <td>{{ task.end_time }}</td>
+                <td>{{ task.platform }}</td>
+                <td>{{ task.retries }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="8">No tasks found.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <div style="margin-top:1em;">
+        {% if total_pages > 1 %}
+            <div>
+                {% for p in page_range %}
+                    {% if p == page %}
+                        <strong>{{ p }}</strong>
+                    {% else %}
+                        <a href="?{% if selected_platform %}platform={{ selected_platform }}&{% endif %}{% if selected_location %}location={{ selected_location }}&{% endif %}{% if date %}date={{ date }}&{% endif %}page={{ p }}">{{ p }}</a>
+                    {% endif %}
+                    {% if not forloop.last %} | {% endif %}
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+</body>
+</html>
