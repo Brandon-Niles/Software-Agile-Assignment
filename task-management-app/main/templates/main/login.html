@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Login - Task Management System</title>
+    <style>
+        body {
+            background: #0a192f;
+            color: #ccd6f6;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        .login-container {
+            background: #112240;
+            padding: 2em 2.5em;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 350px;
+            margin: 5em auto 0 auto;
+            box-shadow: 0 2px 8px rgba(10,25,47,0.4);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        h2 {
+            color: #64ffda;
+            margin-bottom: 1.5em;
+            letter-spacing: 2px;
+        }
+        label {
+            color: #ccd6f6;
+            font-weight: 500;
+            display: block;
+            margin-bottom: 0.5em;
+        }
+        input[type="text"], input[type="password"] {
+            background: #0a192f;
+            color: #ccd6f6;
+            border: 1px solid #233554;
+            border-radius: 4px;
+            padding: 0.5em 0.8em;
+            width: 100%;
+            margin-bottom: 1em;
+        }
+        button {
+            background: #64ffda;
+            color: #0a192f;
+            border: none;
+            border-radius: 4px;
+            padding: 0.6em 1.2em;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 0.5em;
+            transition: background 0.2s;
+        }
+        .error {
+            color: #ff5370;
+            margin-bottom: 1em;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <h2>Login</h2>
+        {% if error %}
+            <div class="error">{{ error }}</div>
+        {% endif %}
+        <form method="post" autocomplete="off">
+            {% csrf_token %}
+            <label for="username">Username</label>
+            <input type="text" id="username" name="username" required autofocus>
+            <label for="password">Password</label>
+            <input type="password" id="password" name="password" required>
+            <button type="submit">Login</button>
+        </form>
+    </div>
+</body>
+</html>
