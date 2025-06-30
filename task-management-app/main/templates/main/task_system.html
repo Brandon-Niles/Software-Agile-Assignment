@@ -52,6 +52,9 @@
     </script>
 </head>
 <body>
+    <h1 style="text-align:center; color:#64ffda; margin-top:1.5em; margin-bottom:0.5em; letter-spacing:2px;">
+        Task Management System
+    </h1>
     <div class="role-box">
         Role: {{ user.is_superuser|yesno:"Admin,User" }}
     </div>
@@ -59,8 +62,8 @@
     <table>
         <thead>
             <tr>
-                <th>ID</th>
-                <th>Title</th> <!-- changed from Name -->
+                <th>#</th>
+                <th>Title</th>
                 <th>Platform</th>
                 <th>Location</th>
                 <th>Status</th>
@@ -68,15 +71,21 @@
                 <th>End Time</th>
                 <th>Platform</th>
                 <th>Retries</th>
-                <th>Actions</th>
+                <th style="text-align:center;">
+                    Actions
+                    {% if user.is_superuser %}
+                        <a href="{% url 'add_task' %}" style="margin-left:0.5em;">
+                            <button type="button" style="padding:0.3em 0.8em; font-size:1em;">+</button>
+                        </a>
+                    {% endif %}
+                </th>
             </tr>
         </thead>
         <tbody>
             {% for task in tasks %}
-            <!-- Data row -->
             <tr id="data-row-{{ task.id }}" class="data-row">
-                <td>{{ task.id }}</td>
-                <td>{{ task.title }}</td> <!-- changed from task.name -->
+                <td>{{ forloop.counter }}</td>
+                <td>{{ task.title }}</td>
                 <td>{{ task.platform }}</td>
                 <td>{{ task.location }}</td>
                 <td>{{ task.status }}</td>
@@ -139,11 +148,6 @@
             {% endfor %}
         </tbody>
     </table>
-    {% if user.is_superuser %}
-        <button>Add Task</button>
-    {% else %}
-        <button disabled title="Read only">Add Task</button>
-    {% endif %}
 
     <!-- Pagination controls at the bottom -->
     <div style="text-align:center; margin: 2em 0;">

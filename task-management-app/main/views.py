@@ -72,7 +72,7 @@ def task_list(request):
     locations = sorted(set(t.location for t in tasks))
 
     # Pagination
-    paginator = Paginator(filtered, 10)  # 10 tasks per page
+    paginator = Paginator(filtered, 50)  # 50 tasks per page
     page_number = request.GET.get('page', 1)
     page_obj = paginator.get_page(page_number)
 
@@ -116,3 +116,20 @@ def cancel_task(request, task_id):
         task.save()
         return redirect('task_list')
     return render(request, 'main/cancel_task.html', {'task': task})
+
+@login_required
+def add_task(request):
+    if not request.user.is_superuser:
+        return redirect('task_list')
+    if request.method == 'POST':
+        Task.objects.create(
+            title=request.POST.get('title', 'System Update'),
+            platform=request.POST.get('platform', ''),
+            location=request.POST.get('location', ''),
+            status=request.POST.get('status', ''),
+            start_time=request.POST.get('start_time', ''),
+            end_time=request.POST.get('end_time', ''),
+            retries=request.POST.get('retries', 0)
+        )
+        return redirect('task_list')
+    return render(request, 'main/add_task.html')
