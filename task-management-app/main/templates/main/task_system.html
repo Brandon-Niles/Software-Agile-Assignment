@@ -84,7 +84,7 @@
         <tbody>
             {% for task in tasks %}
             <tr id="data-row-{{ task.id }}" class="data-row">
-                <td>{{ forloop.counter }}</td>
+                <td>{{ forloop.counter0|add:page_obj.start_index }}</td>
                 <td>{{ task.title }}</td>
                 <td>{{ task.platform }}</td>
                 <td>{{ task.location }}</td>
