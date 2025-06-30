@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Cancel Task</title>
+</head>
+<body>
+    <h2>Cancel Task #{{ task.id }}</h2>
+    <p>Are you sure you want to cancel this task?</p>
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit">Yes, Cancel</button>
+        <a href="{% url 'task_list' %}">No, Go Back</a>
+    </form>
+</body>
+</html>

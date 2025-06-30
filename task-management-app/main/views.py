@@ -4,6 +4,8 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django import forms
 from .models import Task
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
 
 # Registration form
 class RegisterForm(forms.ModelForm):
@@ -80,3 +82,31 @@ def task_list(request):
         'total_pages': 1,
         'page_range': range(1, 2),
     })
+
+@login_required
+def edit_task(request, task_id):
+    if not request.user.is_superuser:
+        return JsonResponse({'error': 'Forbidden'}, status=403)
+    task = get_object_or_404(Task, id=task_id)
+    if request.method == 'POST':
+        task.name = request.POST.get('name', task.name)
+        task.platform = request.POST.get('platform', task.platform)
+        task.location = request.POST.get('location', task.location)
+        task.status = request.POST.get('status', task.status)
+        task.start_time = request.POST.get('start_time', task.start_time)
+        task.end_time = request.POST.get('end_time', task.end_time)
+        task.retries = request.POST.get('retries', task.retries)
+        task.save()
+        return redirect('task_list')
+    return render(request, 'main/edit_task.html', {'task': task})
+
+@login_required
+def cancel_task(request, task_id):
+    if not request.user.is_superuser:
+        return JsonResponse({'error': 'Forbidden'}, status=403)
+    task = get_object_or_404(Task, id=task_id)
+    if request.method == 'POST':
+        task.status = 'Cancelled'
+        task.save()
+        return redirect('task_list')
+    return render(request, 'main/cancel_task.html', {'task': task})
