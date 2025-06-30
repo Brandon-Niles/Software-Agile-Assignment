@@ -1,7 +1,51 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
+from django import forms
 from .models import Task
+
+# Registration form
+class RegisterForm(forms.ModelForm):
+    password = forms.CharField(widget=forms.PasswordInput)
+    class Meta:
+        model = User
+        fields = ['username', 'password']
+
+def register_view(request):
+    if request.user.is_authenticated:
+        return redirect('task_list')
+    error = None
+    if request.method == "POST":
+        form = RegisterForm(request.POST)
+        if form.is_valid():
+            user = form.save(commit=False)
+            user.set_password(form.cleaned_data['password'])
+            user.save()
+            login(request, user)
+            return redirect('task_list')
+        else:
+            error = "Invalid registration details"
+    else:
+        form = RegisterForm()
+    return render(request, "main/register.html", {"form": form, "error": error})
+
+def login_view(request):
+    error = None
+    if request.method == "POST":
+        username = request.POST.get("username")
+        password = request.POST.get("password")
+        user = authenticate(request, username=username, password=password)
+        if user:
+            login(request, user)
+            return redirect('task_list')
+        else:
+            error = "Invalid username or password"
+    return render(request, "main/login.html", {"error": error})
+
+def logout_view(request):
+    logout(request)
+    return redirect('login')
 
 @login_required
 def task_list(request):
@@ -36,22 +80,3 @@ def task_list(request):
         'total_pages': 1,
         'page_range': range(1, 2),
     })
-
-def login_view(request):
-    if request.user.is_authenticated:
-        return redirect('task_list')
-    error = None
-    if request.method == "POST":
-        username = request.POST.get("username")
-        password = request.POST.get("password")
-        user = authenticate(request, username=username, password=password)
-        if user:
-            login(request, user)
-            return redirect('task_list')
-        else:
-            error = "Invalid username or password"
-    return render(request, "main/login.html", {"error": error})
-
-def logout_view(request):
-    logout(request)
-    return redirect('login')
