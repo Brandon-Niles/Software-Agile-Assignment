@@ -82,8 +82,8 @@
         <h2>Edit Task #{{ task.id }}</h2>
         <form method="post">
             {% csrf_token %}
-            <label>Name:
-                <input type="text" name="name" value="{{ task.name }}" required>
+            <label>Title:
+                <input type="text" name="title" value="{{ task.title }}" required>
             </label>
             <label>Platform:
                 <input type="text" name="platform" value="{{ task.platform }}" required>

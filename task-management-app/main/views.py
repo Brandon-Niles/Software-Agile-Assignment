@@ -1,3 +1,4 @@
+from django.core.paginator import Paginator
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
@@ -59,7 +60,7 @@ def task_list(request):
     tasks = Task.objects.all()
     filtered = tasks
     if search:
-        filtered = [t for t in filtered if search in t.name.lower() or search in str(t.id)]
+        filtered = [t for t in filtered if search in t.title.lower() or search in str(t.id)]  # <-- use title
     if platform:
         filtered = [t for t in filtered if t.platform == platform]
     if location:
@@ -70,26 +71,31 @@ def task_list(request):
     platforms = sorted(set(t.platform for t in tasks))
     locations = sorted(set(t.location for t in tasks))
 
+    # Pagination
+    paginator = Paginator(filtered, 10)  # 10 tasks per page
+    page_number = request.GET.get('page', 1)
+    page_obj = paginator.get_page(page_number)
+
     return render(request, 'main/task_system.html', {
-        'tasks': filtered,
+        'tasks': page_obj.object_list,
         'platforms': platforms,
         'locations': locations,
         'search': request.GET.get('search', ''),
         'selected_platform': platform,
         'selected_location': location,
         'date': date,
-        'page': 1,
-        'total_pages': 1,
-        'page_range': range(1, 2),
+        'page': page_number,
+        'total_pages': paginator.num_pages,
+        'page_obj': page_obj,
     })
 
 @login_required
 def edit_task(request, task_id):
-    if not request.user.is_superuser:
-        return JsonResponse({'error': 'Forbidden'}, status=403)
     task = get_object_or_404(Task, id=task_id)
+    if not request.user.is_superuser:
+        return redirect('task_list')
     if request.method == 'POST':
-        task.name = request.POST.get('name', task.name)
+        task.title = request.POST.get('title', task.title)
         task.platform = request.POST.get('platform', task.platform)
         task.location = request.POST.get('location', task.location)
         task.status = request.POST.get('status', task.status)
