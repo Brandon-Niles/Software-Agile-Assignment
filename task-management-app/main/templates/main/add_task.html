@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Add Task</title>
+    <style>
+        body { background: #0a192f; color: #ccd6f6; font-family: 'Segoe UI', Arial, sans-serif; }
+        .add-container {
+            background: #112240;
+            max-width: 500px;
+            margin: 4em auto 0 auto;
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(10,25,47,0.4);
+            padding: 2em 2.5em;
+        }
+        h2 {
+            color: #64ffda;
+            text-align: center;
+            margin-bottom: 1.5em;
+            letter-spacing: 2px;
+        }
+        label {
+            color: #ccd6f6;
+            font-weight: 500;
+            display: block;
+            margin-bottom: 0.7em;
+        }
+        input[type="text"], input[type="number"] {
+            width: 100%;
+            padding: 0.5em;
+            margin-top: 0.2em;
+            background: #0a192f;
+            color: #ccd6f6;
+            border: 1px solid #233554;
+            border-radius: 4px;
+        }
+        .action-btns {
+            display: flex;
+            justify-content: center;
+            gap: 1em;
+            margin-top: 1.5em;
+        }
+        button {
+            background: #64ffda;
+            color: #0a192f;
+            border: none;
+            padding: 0.7em 1.4em;
+            border-radius: 5px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .cancel-btn {
+            background: #233554;
+            color: #ccd6f6;
+        }
+    </style>
+</head>
+<body>
+    <div class="add-container">
+        <h2>Add Task</h2>
+        <form method="post">
+            {% csrf_token %}
+            <label>Title:
+                <input type="text" name="title" required>
+            </label>
+            <label>Platform:
+                <input type="text" name="platform" required>
+            </label>
+            <label>Location:
+                <input type="text" name="location" required>
+            </label>
+            <label>Status:
+                <input type="text" name="status" required>
+            </label>
+            <label>Start Time:
+                <input type="text" name="start_time" required>
+            </label>
+            <label>End Time:
+                <input type="text" name="end_time">
+            </label>
+            <label>Retries:
+                <input type="number" name="retries" value="0" min="0">
+            </label>
+            <div class="action-btns">
+                <button type="submit">Save</button>
+                <a href="{% url 'task_list' %}" class="cancel-btn button" style="text-decoration:none;line-height:2.4em;">Cancel</a>
+            </div>
+        </form>
+    </div>
+</body>
+</html>
