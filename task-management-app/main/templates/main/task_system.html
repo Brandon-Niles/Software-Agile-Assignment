@@ -59,6 +59,20 @@
         Role: {{ user.is_superuser|yesno:"Admin,User" }}
     </div>
     <h2>Tasks</h2>
+
+    <!-- Search form -->
+    <form method="get" action="{% url 'task_list' %}" style="text-align:center; margin-bottom:1.5em;">
+        <input
+            type="text"
+            name="search"
+            value="{{ search|default:'' }}"
+            placeholder="Search tasks..."
+            style="padding:0.6em 1em; border-radius:5px; border:1px solid #233554; background:#0a192f; color:#ccd6f6; width:300px;"
+            autofocus
+        >
+        <button type="submit" style="background:#64ffda; color:#0a192f; font-weight:600; border-radius:5px; border:none; padding:0.6em 1.2em; margin-left:0.5em;">Search</button>
+    </form>
+
     <table>
         <thead>
             <tr>
@@ -81,7 +95,7 @@
                 </th>
             </tr>
         </thead>
-        <tbody>
+        <tbody id="task-table-body">
             {% for task in tasks %}
             <tr id="data-row-{{ task.id }}" class="data-row">
                 <td>{{ forloop.counter0|add:page_obj.start_index }}</td>
@@ -153,13 +167,36 @@
     <div style="text-align:center; margin: 2em 0;">
         <div class="pagination" style="display:inline-block;">
             {% if page_obj.has_previous %}
-                <a href="?page={{ page_obj.previous_page_number }}" style="color:#64ffda; margin-right:1em;">&laquo; Prev</a>
+                <a href="?search={{ search }}&page={{ page_obj.previous_page_number }}" style="color:#64ffda; margin-right:1em;">&laquo; Prev</a>
             {% endif %}
             <span style="color:#ccd6f6;">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
             {% if page_obj.has_next %}
-                <a href="?page={{ page_obj.next_page_number }}" style="color:#64ffda; margin-left:1em;">Next &raquo;</a>
+                <a href="?search={{ search }}&page={{ page_obj.next_page_number }}" style="color:#64ffda; margin-left:1em;">Next &raquo;</a>
             {% endif %}
         </div>
     </div>
+
+    <script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.querySelector('input[name="search"]');
+    const tableBody = document.getElementById('task-table-body');
+    let timeout = null;
+
+    searchInput.addEventListener('input', function() {
+        clearTimeout(timeout);
+        timeout = setTimeout(function() {
+            const params = new URLSearchParams(window.location.search);
+            params.set('search', searchInput.value);
+            fetch(window.location.pathname + '?' + params.toString(), {
+                headers: {'x-requested-with': 'XMLHttpRequest'}
+            })
+            .then(response => response.json())
+            .then(data => {
+                tableBody.innerHTML = data.html;
+            });
+        }, 300); // 300ms debounce
+    });
+});
+</script>
 </body>
 </html>
