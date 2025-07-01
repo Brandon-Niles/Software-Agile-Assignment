@@ -7,6 +7,8 @@ from django import forms
 from .models import Task
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
+from django.db.models import Q
+from django.template.loader import render_to_string
 
 # Registration form
 class RegisterForm(forms.ModelForm):
@@ -52,41 +54,35 @@ def logout_view(request):
 
 @login_required
 def task_list(request):
-    search = request.GET.get('search', '').strip().lower()
-    platform = request.GET.get('platform', '')
-    location = request.GET.get('location', '')
-    date = request.GET.get('date', '')
-
+    search = request.GET.get('search', '').strip()
     tasks = Task.objects.all()
-    filtered = tasks
     if search:
-        filtered = [t for t in filtered if search in t.title.lower() or search in str(t.id)]  # <-- use title
-    if platform:
-        filtered = [t for t in filtered if t.platform == platform]
-    if location:
-        filtered = [t for t in filtered if t.location == location]
-    if date:
-        filtered = [t for t in filtered if t.start_time.startswith(date)]
-
-    platforms = sorted(set(t.platform for t in tasks))
-    locations = sorted(set(t.location for t in tasks))
-
-    # Pagination
-    paginator = Paginator(filtered, 50)  # 50 tasks per page
+        tasks = tasks.filter(
+            Q(title__icontains=search) |
+            Q(platform__icontains=search) |
+            Q(location__icontains=search) |
+            Q(status__icontains=search) |
+            Q(start_time__icontains=search) |
+            Q(end_time__icontains=search) |
+            Q(retries__icontains=search)
+        )
+    paginator = Paginator(tasks, 50)
     page_number = request.GET.get('page', 1)
     page_obj = paginator.get_page(page_number)
 
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        html = render_to_string('main/task_table_rows.html', {
+            'tasks': page_obj.object_list,
+            'page_obj': page_obj,
+            'user': request.user,
+            'search': search,
+        })
+        return JsonResponse({'html': html})
+
     return render(request, 'main/task_system.html', {
         'tasks': page_obj.object_list,
-        'platforms': platforms,
-        'locations': locations,
-        'search': request.GET.get('search', ''),
-        'selected_platform': platform,
-        'selected_location': location,
-        'date': date,
-        'page': page_number,
-        'total_pages': paginator.num_pages,
         'page_obj': page_obj,
+        'search': search,
     })
 
 @login_required
