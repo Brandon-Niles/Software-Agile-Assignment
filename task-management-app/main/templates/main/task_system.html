@@ -160,10 +160,10 @@
     <div style="position: absolute; top: 18px; left: 32px; z-index: 10;">
         <span class="role-box" style="background: #233554; color: #64ffda; font-weight: bold; font-size: 1.1em; padding: 0.6em 1.4em;">
             Role: 
-            {% if request.session.selected_role %}
-                {{ request.session.selected_role|title }}
+            {% if selected_role %}
+                {{ selected_role|title }}
             {% else %}
-                {% if user.is_superuser %}Admin{% else %}Client{% endif %}
+                Client
             {% endif %}
         </span>
     </div>
