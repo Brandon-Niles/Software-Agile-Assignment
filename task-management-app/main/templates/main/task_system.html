@@ -52,12 +52,47 @@
     </script>
 </head>
 <body>
+    <!-- Role Box Top Left (moved and styled) -->
+    <div style="position: absolute; top: 18px; left: 32px; z-index: 10;">
+        <span class="role-box" style="background: #233554; color: #64ffda; font-weight: bold; font-size: 1.1em; padding: 0.6em 1.4em;">
+            Role: 
+            {% if request.session.selected_role %}
+                {{ request.session.selected_role|title }}
+            {% else %}
+                {% if user.is_superuser %}Admin{% else %}Client{% endif %}
+            {% endif %}
+        </span>
+    </div>
+    <!-- Logout Button Top Right -->
+    <div style="position: absolute; top: 18px; right: 32px; z-index: 10;">
+        {% if user.is_authenticated %}
+            <form action="{% url 'logout' %}" method="post" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit"
+                        style="
+                            background: #ff5370;
+                            color: #fff;
+                            font-weight: bold;
+                            border: none;
+                            border-radius: 24px;
+                            padding: 0.6em 1.6em;
+                            font-size: 1.05em;
+                            box-shadow: 0 2px 8px rgba(255,83,112,0.15);
+                            cursor: pointer;
+                            transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+                            letter-spacing: 1px;
+                        "
+                        onmouseover="this.style.background='#d32f2f';"
+                        onmouseout="this.style.background='#ff5370';"
+                        title="Logout">
+                    Logout
+                </button>
+            </form>
+        {% endif %}
+    </div>
     <h1 style="text-align:center; color:#64ffda; margin-top:1.5em; margin-bottom:0.5em; letter-spacing:2px;">
         Task Management System
     </h1>
-    <div class="role-box">
-        Role: {{ user.is_superuser|yesno:"Admin,User" }}
-    </div>
     <h2>Tasks</h2>
 
     <!-- Search form -->
@@ -83,7 +118,6 @@
                 <th>Status</th>
                 <th>Start Time</th>
                 <th>End Time</th>
-                <th>Platform</th>
                 <th>Retries</th>
                 <th style="text-align:center;">
                     Actions
@@ -105,7 +139,6 @@
                 <td>{{ task.status }}</td>
                 <td>{{ task.start_time }}</td>
                 <td>{{ task.end_time }}</td>
-                <td>{{ task.platform }}</td>
                 <td>{{ task.retries }}</td>
                 <td>
                     <div class="action-btns">
