@@ -37,16 +37,23 @@ def register_view(request):
 
 def login_view(request):
     error = None
-    if request.method == "POST":
-        username = request.POST.get("username")
-        password = request.POST.get("password")
+    selected_role = ''
+    if request.method == 'POST':
+        selected_role = request.POST.get('role', '')
+        username = request.POST.get('username', '')
+        password = request.POST.get('password', '')
+        # If role is selected, override username
+        if selected_role == 'admin':
+            username = 'admin'
+        elif selected_role == 'client':
+            username = 'client'
         user = authenticate(request, username=username, password=password)
-        if user:
+        if user is not None:
             login(request, user)
             return redirect('task_list')
         else:
-            error = "Invalid username or password"
-    return render(request, "main/login.html", {"error": error})
+            error = "wrong password or username"
+    return render(request, 'main/login.html', {'error': error, 'selected_role': selected_role})
 
 def logout_view(request):
     logout(request)
