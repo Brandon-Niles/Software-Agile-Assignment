@@ -70,18 +70,18 @@
             gap: 0.3em;
         }
         .add-btn {
-            background: linear-gradient(90deg, #64ffda 60%, #233554 100%);
+            background: #64ffda;
             color: #0a192f;
             font-weight: bold;
             border: none;
             border-radius: 6px;
             padding: 0.5em 1.2em;
             margin-bottom: 0.2em;
-            box-shadow: 0 2px 8px rgba(100,255,218,0.15);
+            box-shadow: none;
             transition: background 0.2s, color 0.2s;
         }
         .add-btn:hover {
-            background: linear-gradient(90deg, #233554 0%, #64ffda 100%);
+            background: #233554;
             color: #64ffda;
         }
         .action-btns {
@@ -211,12 +211,6 @@
         >
         <button type="submit" style="background:#64ffda; color:#0a192f; font-weight:600; border-radius:5px; border:none; padding:0.6em 1.2em; margin-left:0.5em;">Search</button>
     </form>
-
-    {% if selected_role == 'admin' %}
-      <a href="{% url 'add_task' %}" class="btn btn-primary" style="display: block; max-width: 200px; margin: 0 auto 1.5em auto; padding: 0.7em 1.4em; text-align: center; background: #64ffda; color: #0a192f; border-radius: 5px; font-weight: 600; text-decoration: none; transition: background 0.2s, color 0.2s;">
-        Add Task
-      </a>
-    {% endif %}
 
     <form method="get" id="filter-form">
       <table>

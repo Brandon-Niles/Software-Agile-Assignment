@@ -7,6 +7,7 @@ from django import forms
 from .models import Task
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
 from django.db.models import Q
 from django.template.loader import render_to_string
 
@@ -179,3 +180,19 @@ def add_task(request):
         )
         return redirect('task_list')
     return render(request, 'main/add_task.html')
+
+@require_POST
+@login_required
+def ajax_cancel_task(request, task_id):
+    from .models import Task
+    task = get_object_or_404(Task, id=task_id)
+    # Only allow admin to cancel
+    if request.session.get('selected_role') != 'admin':
+        return JsonResponse({'success': False, 'error': 'Permission denied.'}, status=403)
+    task.status = 'cancelled'
+    task.save()
+    return JsonResponse({
+        'success': True,
+        'task_id': task.id,
+        'new_status': task.status,
+    })

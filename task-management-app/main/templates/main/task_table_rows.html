@@ -5,7 +5,9 @@
         <td>{{ task.title }}</td>
         <td>{{ task.platform }}</td>
         <td>{{ task.location }}</td>
-        <td>{{ task.status }}</td>
+        <td>
+            <span class="status-label status-{{ task.status|lower }}">{{ task.status|capfirst }}</span>
+        </td>
         <td>{{ task.start_time }}</td>
         <td>{{ task.end_time }}</td>
         <td>{{ task.retries }}</td>
@@ -13,7 +15,17 @@
         <td>
             <div class="action-btns">
                 <a href="{% url 'edit_task' task.id %}">Edit</a>
-                <a href="{% url 'cancel_task' task.id %}">Cancel</a>
+                <button type="button" class="cancel-btn" onclick="showCancelPopup({{ task.id }})" {% if task.status == 'cancelled' %}disabled{% endif %}>Cancel</button>
+            </div>
+            <!-- Cancel confirmation popup -->
+            <div id="cancel-popup-{{ task.id }}" class="cancel-popup">
+                <div class="cancel-popup-content">
+                    <p>Are you sure you want to cancel this task?</p>
+                    <div class="popup-actions">
+                        <button type="button" class="popup-confirm" onclick="ajaxCancelTask({{ task.id }})">Yes, Cancel</button>
+                        <button type="button" class="popup-close" onclick="hideCancelPopup({{ task.id }})">No</button>
+                    </div>
+                </div>
             </div>
         </td>
         {% endif %}
@@ -57,3 +69,127 @@
     </tr>
     {% endfor %}
 </tbody>
+<style>
+.cancel-popup {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(10, 25, 47, 0.75);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+}
+.cancel-popup-content {
+    background: #112240;
+    color: #ccd6f6;
+    border-radius: 10px;
+    padding: 2em 2.5em;
+    box-shadow: 0 4px 24px rgba(100,255,218,0.15);
+    text-align: center;
+    min-width: 260px;
+}
+.popup-actions {
+    margin-top: 1.2em;
+    display: flex;
+    gap: 1em;
+    justify-content: center;
+}
+.popup-confirm {
+    background: #64ffda;
+    color: #0a192f;
+    border: none;
+    border-radius: 5px;
+    padding: 0.5em 1.2em;
+    font-weight: bold;
+    text-decoration: none;
+    transition: background 0.2s, color 0.2s;
+    box-shadow: 0 2px 8px rgba(100,255,218,0.10);
+}
+.popup-confirm:hover {
+    background: #233554;
+    color: #64ffda;
+}
+.popup-close {
+    background: #ff5370;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    padding: 0.5em 1.2em;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+}
+.popup-close:hover {
+    background: #233554;
+    color: #ff5370;
+}
+.status-label {
+    padding: 0.3em 0.8em;
+    border-radius: 12px;
+    font-weight: bold;
+    font-size: 0.95em;
+    letter-spacing: 0.5px;
+    display: inline-block;
+}
+.status-cancelled { background: #ff5370; color: #fff; }
+.status-failed    { background: #ffb86c; color: #fff; }
+.status-pending   { background: #ffd700; color: #222; }
+.status-completed { background: #64ffda; color: #0a192f; }
+.status-running   { background: #40c4ff; color: #fff; }
+</style>
+<script>
+function showCancelPopup(taskId) {
+    document.getElementById('cancel-popup-' + taskId).style.display = 'flex';
+}
+function hideCancelPopup(taskId) {
+    document.getElementById('cancel-popup-' + taskId).style.display = 'none';
+}
+function ajaxCancelTask(taskId) {
+    fetch("{% url 'ajax_cancel_task' 0 %}".replace('0', taskId), {
+        method: "POST",
+        headers: {
+            "X-CSRFToken": getCookie('csrftoken'),
+            "Accept": "application/json"
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Update status cell
+            const row = document.getElementById('data-row-' + taskId);
+            if (row) {
+                const statusCell = row.querySelector('.status-label');
+                statusCell.textContent = "Cancelled";
+                statusCell.className = "status-label status-cancelled";
+                // Optionally disable the cancel button
+                const cancelBtn = row.querySelector('.cancel-btn');
+                if (cancelBtn) cancelBtn.disabled = true;
+            }
+            hideCancelPopup(taskId);
+        } else {
+            alert(data.error || "Failed to cancel task.");
+        }
+    });
+}
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+document.addEventListener('keydown', function(e) {
+    if (e.key === "Escape") {
+        document.querySelectorAll('.cancel-popup').forEach(function(popup) {
+            popup.style.display = 'none';
+        });
+    }
+});
+</script>
