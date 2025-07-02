@@ -61,6 +61,31 @@ def logout_view(request):
 def task_list(request):
     search = request.GET.get('search', '').strip()
     tasks = Task.objects.all()
+
+    # Filtering by dropdowns
+    title = request.GET.get('title', '')
+    platform = request.GET.get('platform', '')
+    location = request.GET.get('location', '')
+    status = request.GET.get('status', '')
+    start_time = request.GET.get('start_time', '')
+    end_time = request.GET.get('end_time', '')
+    retries = request.GET.get('retries', '')
+
+    if title:
+        tasks = tasks.filter(title=title)
+    if platform:
+        tasks = tasks.filter(platform=platform)
+    if location:
+        tasks = tasks.filter(location=location)
+    if status:
+        tasks = tasks.filter(status=status)
+    if start_time:
+        tasks = tasks.filter(start_time=start_time)
+    if end_time:
+        tasks = tasks.filter(end_time=end_time)
+    if retries:
+        tasks = tasks.filter(retries=retries)
+
     if search:
         tasks = tasks.filter(
             Q(title__icontains=search) |
@@ -71,28 +96,44 @@ def task_list(request):
             Q(end_time__icontains=search) |
             Q(retries__icontains=search)
         )
+
+    # Get unique values for dropdowns
+    titles = Task.objects.values_list('title', flat=True).distinct()
+    platforms = Task.objects.values_list('platform', flat=True).distinct()
+    locations = Task.objects.values_list('location', flat=True).distinct()
+    statuses = Task.objects.values_list('status', flat=True).distinct()
+    start_times = Task.objects.values_list('start_time', flat=True).distinct()
+    end_times = Task.objects.values_list('end_time', flat=True).distinct()
+    retries_list = Task.objects.values_list('retries', flat=True).distinct()
+
     paginator = Paginator(tasks, 50) 
     page_number = request.GET.get('page', 1)
     page_obj = paginator.get_page(page_number)
 
     selected_role = request.session.get('selected_role', '')
 
-    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-        html = render_to_string('main/task_table_rows.html', {
-            'tasks': page_obj.object_list,
-            'page_obj': page_obj,
-            'user': request.user,
-            'search': search,
-            'selected_role': selected_role,
-        })
-        return JsonResponse({'html': html})
-
-    return render(request, 'main/task_system.html', {
+    context = {
         'tasks': page_obj.object_list,
         'page_obj': page_obj,
         'search': search,
         'selected_role': selected_role,
-    })
+        'titles': titles,
+        'platforms': platforms,
+        'locations': locations,
+        'statuses': statuses,
+        'start_times': start_times,
+        'end_times': end_times,
+        'retries': retries_list,
+    }
+
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        html = render_to_string('main/task_table_rows.html', {
+            **context,
+            'user': request.user,
+        })
+        return JsonResponse({'html': html})
+
+    return render(request, 'main/task_system.html', context)
 
 @login_required
 def edit_task(request, task_id):
