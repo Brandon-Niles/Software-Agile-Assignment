@@ -8,16 +8,16 @@ TITLES = [
     "Log Rotation", "Disk Cleanup", "Service Restart", "Network Scan",
     "Software Deployment", "Resource Monitoring"
 ]
-PLATFORMS = ['Windows', 'Linux', 'macOS', 'Azure', 'AWS']
+PLATFORMS = ['AWS', 'Azure', 'GCP', 'VMware', 'On-Premise']
 LOCATIONS = ['London', 'Frankfurt', 'Sydney', 'New York', 'Tokyo']
 STATUSES = ['Pending', 'Running', 'Completed', 'Failed', 'Cancelled']
 
 class Command(BaseCommand):
-    help = 'Generate 100 realistic system tasks'
+    help = 'Generate 500 realistic system tasks'
 
     def handle(self, *args, **kwargs):
         Task.objects.all().delete()
-        for _ in range(100):
+        for _ in range(500):
             start = datetime.now() - timedelta(days=random.randint(0, 30))
             end = start + timedelta(hours=random.randint(1, 48))
             Task.objects.create(
@@ -29,4 +29,4 @@ class Command(BaseCommand):
                 end_time=end.strftime("%Y-%m-%d %H:%M"),
                 retries=random.randint(0, 5)
             )
-        self.stdout.write(self.style.SUCCESS('Successfully generated 100 realistic system tasks'))
+        self.stdout.write(self.style.SUCCESS('Successfully generated 500 realistic system tasks'))

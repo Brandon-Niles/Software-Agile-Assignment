@@ -42,14 +42,11 @@ def login_view(request):
         selected_role = request.POST.get('role', '')
         username = request.POST.get('username', '')
         password = request.POST.get('password', '')
-        # If role is selected, override username
-        if selected_role == 'admin':
-            username = 'admin'
-        elif selected_role == 'client':
-            username = 'client'
         user = authenticate(request, username=username, password=password)
         if user is not None:
             login(request, user)
+            # Store the selected role in the session
+            request.session['selected_role'] = selected_role
             return redirect('task_list')
         else:
             error = "wrong password or username"
@@ -57,6 +54,7 @@ def login_view(request):
 
 def logout_view(request):
     logout(request)
+    request.session.pop('selected_role', None)
     return redirect('login')
 
 @login_required
@@ -73,7 +71,7 @@ def task_list(request):
             Q(end_time__icontains=search) |
             Q(retries__icontains=search)
         )
-    paginator = Paginator(tasks, 50)
+    paginator = Paginator(tasks, 50) 
     page_number = request.GET.get('page', 1)
     page_obj = paginator.get_page(page_number)
 
@@ -94,9 +92,9 @@ def task_list(request):
 
 @login_required
 def edit_task(request, task_id):
-    task = get_object_or_404(Task, id=task_id)
     if not request.user.is_superuser:
         return redirect('task_list')
+    task = get_object_or_404(Task, id=task_id)
     if request.method == 'POST':
         task.title = request.POST.get('title', task.title)
         task.platform = request.POST.get('platform', task.platform)
@@ -112,7 +110,7 @@ def edit_task(request, task_id):
 @login_required
 def cancel_task(request, task_id):
     if not request.user.is_superuser:
-        return JsonResponse({'error': 'Forbidden'}, status=403)
+        return redirect('task_list')
     task = get_object_or_404(Task, id=task_id)
     if request.method == 'POST':
         task.status = 'Cancelled'
