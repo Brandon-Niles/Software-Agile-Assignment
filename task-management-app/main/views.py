@@ -75,12 +75,15 @@ def task_list(request):
     page_number = request.GET.get('page', 1)
     page_obj = paginator.get_page(page_number)
 
+    selected_role = request.session.get('selected_role', '')
+
     if request.headers.get('x-requested-with') == 'XMLHttpRequest':
         html = render_to_string('main/task_table_rows.html', {
             'tasks': page_obj.object_list,
             'page_obj': page_obj,
             'user': request.user,
             'search': search,
+            'selected_role': selected_role,
         })
         return JsonResponse({'html': html})
 
@@ -88,6 +91,7 @@ def task_list(request):
         'tasks': page_obj.object_list,
         'page_obj': page_obj,
         'search': search,
+        'selected_role': selected_role,
     })
 
 @login_required

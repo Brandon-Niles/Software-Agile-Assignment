@@ -108,6 +108,12 @@
         <button type="submit" style="background:#64ffda; color:#0a192f; font-weight:600; border-radius:5px; border:none; padding:0.6em 1.2em; margin-left:0.5em;">Search</button>
     </form>
 
+    {% if selected_role == 'admin' %}
+      <a href="{% url 'add_task' %}" class="btn btn-primary" style="display: block; max-width: 200px; margin: 0 auto 1.5em auto; padding: 0.7em 1.4em; text-align: center; background: #64ffda; color: #0a192f; border-radius: 5px; font-weight: 600; text-decoration: none; transition: background 0.2s, color 0.2s;">
+        Add Task
+      </a>
+    {% endif %}
+
     <table>
         <thead>
             <tr>
@@ -119,14 +125,11 @@
                 <th>Start Time</th>
                 <th>End Time</th>
                 <th>Retries</th>
-                <th style="text-align:center;">
-                    Actions
-                    {% if user.is_superuser %}
-                        <a href="{% url 'add_task' %}" style="margin-left:0.5em;">
-                            <button type="button" style="padding:0.3em 0.8em; font-size:1em;">+</button>
-                        </a>
-                    {% endif %}
-                </th>
+                {% if selected_role == 'admin' %}
+                    <th style="text-align:center;">
+                        Actions
+                    </th>
+                {% endif %}
             </tr>
         </thead>
         <tbody id="task-table-body">
@@ -140,20 +143,17 @@
                 <td>{{ task.start_time }}</td>
                 <td>{{ task.end_time }}</td>
                 <td>{{ task.retries }}</td>
-                <td>
-                    <div class="action-btns">
-                        {% if user.is_superuser %}
+                {% if selected_role == 'admin' %}
+                    <td>
+                        <div class="action-btns">
                             <button type="button" onclick="showEditForm({{ task.id }})">Edit</button>
                             <form action="{% url 'cancel_task' task.id %}" method="post" style="display:inline;" onsubmit="return confirm('Are you sure you want to cancel this task?');">
                                 {% csrf_token %}
                                 <button type="submit">Cancel</button>
                             </form>
-                        {% else %}
-                            <button disabled title="Read only">Edit</button>
-                            <button disabled title="Read only">Cancel</button>
-                        {% endif %}
-                    </div>
-                </td>
+                        </div>
+                    </td>
+                {% endif %}
             </tr>
             <!-- Edit form row (hidden by default) -->
             <tr id="edit-form-row-{{ task.id }}" class="edit-form-row" style="display:none;">

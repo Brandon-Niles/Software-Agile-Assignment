@@ -10,20 +10,14 @@
         <td>{{ task.end_time }}</td>
         <td>{{ task.platform }}</td>
         <td>{{ task.retries }}</td>
+        {% if selected_role == 'admin' %}
         <td>
             <div class="action-btns">
-                {% if user.is_superuser %}
-                    <button type="button" onclick="showEditForm({{ task.id }})">Edit</button>
-                    <form action="{% url 'cancel_task' task.id %}" method="post" style="display:inline;" onsubmit="return confirm('Are you sure you want to cancel this task?');">
-                        {% csrf_token %}
-                        <button type="submit">Cancel</button>
-                    </form>
-                {% else %}
-                    <button disabled title="Read only">Edit</button>
-                    <button disabled title="Read only">Cancel</button>
-                {% endif %}
+                <a href="{% url 'edit_task' task.id %}">Edit</a>
+                <a href="{% url 'cancel_task' task.id %}">Cancel</a>
             </div>
         </td>
+        {% endif %}
     </tr>
     <!-- Edit form row (hidden by default) -->
     <tr id="edit-form-row-{{ task.id }}" class="edit-form-row" style="display:none;">
