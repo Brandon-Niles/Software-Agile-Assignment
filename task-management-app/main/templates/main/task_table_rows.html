@@ -11,12 +11,16 @@
         <td>{{ task.start_time }}</td>
         <td>{{ task.end_time }}</td>
         <td>{{ task.retries }}</td>
-        {% if selected_role == 'admin' %}
         <td>
             <div class="action-btns">
                 <a href="{% url 'edit_task' task.id %}">Edit</a>
-                <button type="button" class="cancel-btn" onclick="showCancelPopup({{ task.id }})" {% if task.status == 'cancelled' %}disabled{% endif %}>Cancel</button>
+                {% if selected_role == 'admin' %}
+                    <button type="button" class="cancel-btn" onclick="showCancelPopup({{ task.id }})" {% if task.status == 'cancelled' %}disabled{% endif %}>Cancel</button>
+                {% else %}
+                    <button type="button" class="cancel-btn cancel-btn-disabled" disabled>Cancel</button>
+                {% endif %}
             </div>
+            {% if selected_role == 'admin' %}
             <!-- Cancel confirmation popup -->
             <div id="cancel-popup-{{ task.id }}" class="cancel-popup">
                 <div class="cancel-popup-content">
@@ -27,8 +31,8 @@
                     </div>
                 </div>
             </div>
+            {% endif %}
         </td>
-        {% endif %}
     </tr>
     <!-- Edit form row (hidden by default) -->
     <tr id="edit-form-row-{{ task.id }}" class="edit-form-row" style="display:none;">
@@ -136,6 +140,13 @@
 .status-pending   { background: #ffd700; color: #222; }
 .status-completed { background: #64ffda; color: #0a192f; }
 .status-running   { background: #40c4ff; color: #fff; }
+.cancel-btn-disabled {
+    background: #b0b7be !important;
+    color: #fff !important;
+    cursor: not-allowed !important;
+    opacity: 0.7;
+    border: none;
+}
 </style>
 <script>
 function showCancelPopup(taskId) {

@@ -280,14 +280,12 @@
                 {% endfor %}
               </div>
             </th>
-            {% if selected_role == 'admin' %}
             <th>
               <div class="actions-header">
                 <button type="button" class="add-btn" onclick="window.location.href='{% url 'add_task' %}'">+ Add Task</button>
                 Actions
               </div>
             </th>
-            {% endif %}
           </tr>
         </thead>
         <tbody id="task-table-body">

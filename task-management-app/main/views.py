@@ -10,6 +10,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.db.models import Q
 from django.template.loader import render_to_string
+from django.contrib import messages
 
 # Registration form
 class RegisterForm(forms.ModelForm):
@@ -163,6 +164,19 @@ def cancel_task(request, task_id):
         task.save()
         return redirect('task_list')
     return render(request, 'main/cancel_task.html', {'task': task})
+
+@login_required
+def delete_task(request, task_id):
+    selected_role = request.session.get('selected_role', '')
+    if selected_role != 'admin':
+        messages.error(request, "Only admins can delete tasks.")
+        return redirect('task_list')
+    task = get_object_or_404(Task, id=task_id)
+    if request.method == "POST":
+        task.delete()
+        messages.success(request, "Task deleted.")
+        return redirect('task_list')
+    return redirect('task_list')
 
 @login_required
 def add_task(request):

@@ -11,4 +11,5 @@ urlpatterns = [
     path('tasks/<int:task_id>/cancel/', views.cancel_task, name='cancel_task'),
     path('tasks/add/', views.add_task, name='add_task'),  # <-- Add this line
     path('ajax/cancel-task/<int:task_id>/', views.ajax_cancel_task, name='ajax_cancel_task'),
+    path('delete/<int:task_id>/', views.delete_task, name='delete_task'),
 ]
