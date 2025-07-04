@@ -12,6 +12,7 @@ from django.db.models import Q
 from django.template.loader import render_to_string
 from django.contrib import messages
 from django.urls import reverse
+import re
 
 # Registration form
 class RegisterForm(forms.ModelForm):
@@ -27,9 +28,15 @@ def register_view(request):
         username = request.POST.get("username", "").strip()
         email = request.POST.get("email", "").strip()
         password = request.POST.get("password", "")
-        role = request.POST.get("role", "client")  # <-- Use the selected role from the form
+        role = request.POST.get("role", "client")
 
-        if not (name and username and email and password and role):
+        # Password validation: at least 8 chars, 1 uppercase, 1 lowercase, 1 digit
+        if len(password) < 8 or \
+           not re.search(r'[A-Z]', password) or \
+           not re.search(r'[a-z]', password) or \
+           not re.search(r'\d', password):
+            error = "Password must be at least 8 characters long and include an uppercase letter, a lowercase letter, and a digit."
+        elif not (name and username and email and password and role):
             error = "All fields are required."
         elif User.objects.filter(username=username).exists():
             error = "Username already exists."
