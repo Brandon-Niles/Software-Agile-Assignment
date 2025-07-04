@@ -150,10 +150,9 @@ def task_list(request):
 
 @login_required
 def edit_task(request, task_id):
-    if not request.user.is_superuser:
-        return redirect('task_list')
     task = get_object_or_404(Task, id=task_id)
-    if request.method == 'POST':
+    error = None
+    if request.method == "POST":
         task.title = request.POST.get('title', task.title)
         task.platform = request.POST.get('platform', task.platform)
         task.location = request.POST.get('location', task.location)
@@ -163,7 +162,7 @@ def edit_task(request, task_id):
         task.retries = request.POST.get('retries', task.retries)
         task.save()
         return redirect('task_list')
-    return render(request, 'main/edit_task.html', {'task': task})
+    return render(request, "main/task_form.html", {"task": task, "error": error, "action": "Edit"})
 
 @login_required
 def cancel_task(request, task_id):
@@ -177,34 +176,39 @@ def cancel_task(request, task_id):
     return render(request, 'main/cancel_task.html', {'task': task})
 
 @login_required
+@require_POST
 def delete_task(request, task_id):
-    selected_role = request.session.get('selected_role', '')
-    if selected_role != 'admin':
-        messages.error(request, "Only admins can delete tasks.")
-        return redirect('task_list')
+    if request.session.get('selected_role') != 'admin':
+        return JsonResponse({'success': False, 'error': 'Permission denied.'})
     task = get_object_or_404(Task, id=task_id)
-    if request.method == "POST":
-        task.delete()
-        messages.success(request, "Task deleted.")
-        return redirect('task_list')
-    return redirect('task_list')
+    task.delete()
+    return JsonResponse({'success': True})
 
 @login_required
 def add_task(request):
-    if not request.user.is_superuser:
-        return redirect('task_list')
-    if request.method == 'POST':
-        Task.objects.create(
-            title=request.POST.get('title', 'System Update'),
-            platform=request.POST.get('platform', ''),
-            location=request.POST.get('location', ''),
-            status=request.POST.get('status', ''),
-            start_time=request.POST.get('start_time', ''),
-            end_time=request.POST.get('end_time', ''),
-            retries=request.POST.get('retries', 0)
-        )
-        return redirect('task_list')
-    return render(request, 'main/add_task.html')
+    error = None
+    if request.method == "POST":
+        title = request.POST.get('title', '').strip()
+        platform = request.POST.get('platform', '').strip()
+        location = request.POST.get('location', '').strip()
+        status = request.POST.get('status', '').strip()
+        start_time = request.POST.get('start_time', '').strip()
+        end_time = request.POST.get('end_time', '').strip()
+        retries = request.POST.get('retries', '0').strip()
+        if not (title and platform and location and status and start_time):
+            error = "All fields except End Time are required."
+        else:
+            Task.objects.create(
+                title=title,
+                platform=platform,
+                location=location,
+                status=status,
+                start_time=start_time,
+                end_time=end_time,
+                retries=int(retries) if retries.isdigit() else 0
+            )
+            return redirect('task_list')
+    return render(request, "main/task_form.html", {"error": error, "action": "Add"})
 
 @require_POST
 @login_required
