@@ -114,17 +114,24 @@
             <label for="password">Password</label>
             <input type="password" id="password" name="password" required>
             <button type="submit">Login</button>
-            <div class="role-radio-group">
-                <label class="role-radio-label">
-                    <input type="radio" id="role-admin" name="role" value="admin" onchange="setUsernameFromRole()" {% if selected_role == 'admin' %}checked{% endif %}>
-                    Admin
-                </label>
-                <label class="role-radio-label">
-                    <input type="radio" id="role-client" name="role" value="client" onchange="setUsernameFromRole()" {% if selected_role == 'client' %}checked{% endif %}>
-                    User
-                </label>
-            </div>
         </form>
+        <div style="text-align:center; margin-top:1em;">
+            <a href="{% url 'register' %}" style="color:#64ffda; font-weight:bold; text-decoration:none;">
+                Don't have an account? Register / Sign Up
+            </a>
+        </div>
     </div>
+    {% if request.GET.registered %}
+    <div id="register-success-popup" style="position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:999;background:rgba(10,25,47,0.85);display:flex;align-items:center;justify-content:center;">
+        <div style="background:#112240;padding:2em 2.5em;border-radius:10px;box-shadow:0 2px 8px rgba(100,255,218,0.15);text-align:center;">
+            <h3 style="color:#64ffda;">Registration Successful!</h3>
+            <p style="color:#ccd6f6;">Your account has been created.<br>Please log in with your username and password.</p>
+            <button onclick="document.getElementById('register-success-popup').style.display='none';"
+                    style="margin-top:1.2em;background:#64ffda;color:#0a192f;font-weight:bold;border:none;border-radius:6px;padding:0.7em 1.5em;transition:background 0.2s, color 0.2s;">
+                OK
+            </button>
+        </div>
+    </div>
+    {% endif %}
 </body>
 </html>

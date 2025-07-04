@@ -4,13 +4,14 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django import forms
-from .models import Task
+from .models import Task, UserProfile
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.db.models import Q
 from django.template.loader import render_to_string
 from django.contrib import messages
+from django.urls import reverse
 
 # Registration form
 class RegisterForm(forms.ModelForm):
@@ -20,39 +21,50 @@ class RegisterForm(forms.ModelForm):
         fields = ['username', 'password']
 
 def register_view(request):
-    if request.user.is_authenticated:
-        return redirect('task_list')
     error = None
     if request.method == "POST":
-        form = RegisterForm(request.POST)
-        if form.is_valid():
-            user = form.save(commit=False)
-            user.set_password(form.cleaned_data['password'])
-            user.save()
-            login(request, user)
-            return redirect('task_list')
+        name = request.POST.get("name", "").strip()
+        username = request.POST.get("username", "").strip()
+        email = request.POST.get("email", "").strip()
+        password = request.POST.get("password", "")
+        role = request.POST.get("role", "client")  # <-- Use the selected role from the form
+
+        if not (name and username and email and password and role):
+            error = "All fields are required."
+        elif User.objects.filter(username=username).exists():
+            error = "Username already exists."
+        elif User.objects.filter(email=email).exists():
+            error = "Email already exists."
         else:
-            error = "Invalid registration details"
-    else:
-        form = RegisterForm()
-    return render(request, "main/register.html", {"form": form, "error": error})
+            user = User.objects.create_user(
+                username=username,
+                email=email,
+                password=password,
+                first_name=name
+            )
+            UserProfile.objects.create(user=user, role=role)
+            return redirect(reverse('login') + '?registered=1')
+    return render(request, "main/register.html", {"error": error})
 
 def login_view(request):
     error = None
-    selected_role = ''
-    if request.method == 'POST':
-        selected_role = request.POST.get('role', '')
-        username = request.POST.get('username', '')
-        password = request.POST.get('password', '')
+    if request.method == "POST":
+        username = request.POST.get("username", "").strip()
+        password = request.POST.get("password", "")
         user = authenticate(request, username=username, password=password)
         if user is not None:
             login(request, user)
-            # Store the selected role in the session
-            request.session['selected_role'] = selected_role
+            # Always fetch or create UserProfile and set role accordingly
+            try:
+                profile = user.userprofile
+            except UserProfile.DoesNotExist:
+                # Fallback: create as client
+                profile = UserProfile.objects.create(user=user, role='client')
+            request.session['selected_role'] = profile.role
             return redirect('task_list')
         else:
-            error = "wrong password or username"
-    return render(request, 'main/login.html', {'error': error, 'selected_role': selected_role})
+            error = "Invalid username or password."
+    return render(request, "main/login.html", {"error": error})
 
 def logout_view(request):
     logout(request)
