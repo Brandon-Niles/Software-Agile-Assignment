@@ -3,7 +3,6 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
-from django import forms
 from .models import Task, UserProfile
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -13,13 +12,6 @@ from django.template.loader import render_to_string
 from django.contrib import messages
 from django.urls import reverse
 import re
-
-# Registration form
-class RegisterForm(forms.ModelForm):
-    password = forms.CharField(widget=forms.PasswordInput)
-    class Meta:
-        model = User
-        fields = ['username', 'password']
 
 def register_view(request):
     error = None
