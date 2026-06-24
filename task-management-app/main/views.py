@@ -114,16 +114,19 @@ def task_list(request):
             Q(retries__icontains=search)
         )
 
-    # Get unique values for dropdowns
-    titles = Task.objects.values_list('title', flat=True).distinct()
-    platforms = Task.objects.values_list('platform', flat=True).distinct()
-    locations = Task.objects.values_list('location', flat=True).distinct()
-    statuses = Task.objects.values_list('status', flat=True).distinct()
-    start_times = Task.objects.values_list('start_time', flat=True).distinct()
-    end_times = Task.objects.values_list('end_time', flat=True).distinct()
-    retries_list = Task.objects.values_list('retries', flat=True).distinct()
+    # Order for deterministic pagination and derive dropdown values from filtered queryset
+    tasks = tasks.order_by('id')
 
-    paginator = Paginator(tasks, 50) 
+    # Get unique values for dropdowns from the filtered queryset
+    titles = tasks.values_list('title', flat=True).distinct()
+    platforms = tasks.values_list('platform', flat=True).distinct()
+    locations = tasks.values_list('location', flat=True).distinct()
+    statuses = tasks.values_list('status', flat=True).distinct()
+    start_times = tasks.values_list('start_time', flat=True).distinct()
+    end_times = tasks.values_list('end_time', flat=True).distinct()
+    retries_list = tasks.values_list('retries', flat=True).distinct()
+
+    paginator = Paginator(tasks, 50)
     page_number = request.GET.get('page', 1)
     page_obj = paginator.get_page(page_number)
 
