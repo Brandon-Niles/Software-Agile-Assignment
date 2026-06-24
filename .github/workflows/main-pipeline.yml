@@ -63,7 +63,8 @@ jobs:
       - name: Build and push image
         uses: docker/build-push-action@v4
         with:
-          context: ./
+          context: ./task-management-app
+          file: ./task-management-app/Dockerfile
           push: true
           tags: |
             ghcr.io/${{ github.repository }}/task-app:latest
