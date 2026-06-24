@@ -58,13 +58,16 @@ jobs:
       packages: write
     steps:
       - uses: actions/checkout@v4
-      - name: Sanitize branch name
+      - name: Sanitize branch and repo name
         shell: bash
         run: |
           # strip refs/heads/ and replace slashes with hyphens
           BRANCH_NAME="${GITHUB_REF#refs/heads/}"
-          SANITIZED=$(echo "$BRANCH_NAME" | tr '/' '-')
-          echo "SANITIZED_REF_NAME=$SANITIZED" >> $GITHUB_ENV
+          SANITIZED_REF=$(echo "$BRANCH_NAME" | tr '/' '-')
+          # lowercase repository for docker tag (docker requires lowercase repo names)
+          SANITIZED_REPO="${GITHUB_REPOSITORY,,}"
+          echo "SANITIZED_REF_NAME=$SANITIZED_REF" >> $GITHUB_ENV
+          echo "SANITIZED_REPO=$SANITIZED_REPO" >> $GITHUB_ENV
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
       - name: Set up Docker Buildx
@@ -81,4 +84,4 @@ jobs:
           context: ./task-management-app
           file: ./task-management-app/Dockerfile
           push: true
-          tags: ghcr.io/${{ github.repository }}/task-app:feature-${{ env.SANITIZED_REF_NAME }}-${{ github.sha }}
+          tags: ghcr.io/${{ env.SANITIZED_REPO }}/task-app:feature-${{ env.SANITIZED_REF_NAME }}-${{ github.sha }}

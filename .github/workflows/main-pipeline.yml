@@ -56,6 +56,12 @@ jobs:
       packages: write
     steps:
       - uses: actions/checkout@v4
+      - name: Sanitize repo name
+        shell: bash
+        run: |
+          # docker repository names must be lowercase
+          SANITIZED_REPO="${GITHUB_REPOSITORY,,}"
+          echo "SANITIZED_REPO=$SANITIZED_REPO" >> $GITHUB_ENV
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
       - name: Set up Docker Buildx
@@ -73,8 +79,8 @@ jobs:
           file: ./task-management-app/Dockerfile
           push: true
           tags: |
-            ghcr.io/${{ github.repository }}/task-app:latest
-            ghcr.io/${{ github.repository }}/task-app:dev-${{ github.sha }}
+            ghcr.io/${{ env.SANITIZED_REPO }}/task-app:latest
+            ghcr.io/${{ env.SANITIZED_REPO }}/task-app:dev-${{ github.sha }}
 
   deploy-to-dev-environment:
     runs-on: ubuntu-latest
