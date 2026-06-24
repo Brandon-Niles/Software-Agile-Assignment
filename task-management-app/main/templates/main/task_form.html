@@ -34,28 +34,38 @@
         {% if error %}
             <div class="error">{{ error }}</div>
         {% endif %}
+        {% if form.non_field_errors %}
+            <div class="error">{{ form.non_field_errors }}</div>
+        {% endif %}
         <form method="post">
             {% csrf_token %}
             <label for="title">Title</label>
-            <input type="text" name="title" id="title" value="{{ task.title|default_if_none:'' }}" required>
+            <input type="text" name="title" id="title" value="{{ form.title.value|default:task.title|default_if_none:'' }}" required>
+            {% if form.title.errors %}<div class="error">{{ form.title.errors }}</div>{% endif %}
 
             <label for="platform">Platform</label>
-            <input type="text" name="platform" id="platform" value="{{ task.platform|default_if_none:'' }}" required>
+            <input type="text" name="platform" id="platform" value="{{ form.platform.value|default:task.platform|default_if_none:'' }}" required>
+            {% if form.platform.errors %}<div class="error">{{ form.platform.errors }}</div>{% endif %}
 
             <label for="location">Location</label>
-            <input type="text" name="location" id="location" value="{{ task.location|default_if_none:'' }}" required>
+            <input type="text" name="location" id="location" value="{{ form.location.value|default:task.location|default_if_none:'' }}" required>
+            {% if form.location.errors %}<div class="error">{{ form.location.errors }}</div>{% endif %}
 
             <label for="status">Status</label>
-            <input type="text" name="status" id="status" value="{{ task.status|default_if_none:'' }}" required>
+            <input type="text" name="status" id="status" value="{{ form.status.value|default:task.status|default_if_none:'' }}" required>
+            {% if form.status.errors %}<div class="error">{{ form.status.errors }}</div>{% endif %}
 
             <label for="start_time">Start Time</label>
-            <input type="text" name="start_time" id="start_time" value="{{ task.start_time|default_if_none:'' }}" required>
+            <input type="text" name="start_time" id="start_time" value="{{ form.start_time.value|default:task.start_time|default_if_none:'' }}" required>
+            {% if form.start_time.errors %}<div class="error">{{ form.start_time.errors }}</div>{% endif %}
 
             <label for="end_time">End Time</label>
-            <input type="text" name="end_time" id="end_time" value="{{ task.end_time|default_if_none:'' }}">
+            <input type="text" name="end_time" id="end_time" value="{{ form.end_time.value|default:task.end_time|default_if_none:'' }}">
+            {% if form.end_time.errors %}<div class="error">{{ form.end_time.errors }}</div>{% endif %}
 
             <label for="retries">Retries</label>
-            <input type="number" name="retries" id="retries" value="{{ task.retries|default_if_none:0 }}" min="0">
+            <input type="number" name="retries" id="retries" value="{{ form.retries.value|default:task.retries|default_if_none:0 }}" min="0">
+            {% if form.retries.errors %}<div class="error">{{ form.retries.errors }}</div>{% endif %}
 
             <button type="submit">{{ action }} Task</button>
         </form>

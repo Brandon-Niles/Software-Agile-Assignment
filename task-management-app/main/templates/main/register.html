@@ -47,11 +47,15 @@
             <label for="password">Password</label>
             <input type="password" name="password" id="password" required>
 
-            <label for="role">Role</label>
-            <select name="role" id="role" required>
-                <option value="client">User</option>
-                <option value="admin">Admin</option>
-            </select>
+            {% if request.user.is_authenticated and request.user.is_superuser %}
+                <label for="role">Role</label>
+                <select name="role" id="role" required>
+                    <option value="client">User</option>
+                    <option value="admin">Admin</option>
+                </select>
+            {% else %}
+                <input type="hidden" name="role" value="client">
+            {% endif %}
 
             <button type="submit">Register</button>
         </form>
