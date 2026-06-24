@@ -12,38 +12,42 @@ from django.template.loader import render_to_string
 from django.contrib import messages
 from django.urls import reverse
 import re
+from .forms import TaskForm, RegisterForm
+from .decorators import admin_required
 
 def register_view(request):
     error = None
     if request.method == "POST":
+        form = RegisterForm(request.POST)
         name = request.POST.get("name", "").strip()
-        username = request.POST.get("username", "").strip()
-        email = request.POST.get("email", "").strip()
-        password = request.POST.get("password", "")
-        role = request.POST.get("role", "client")
-
-        # Password validation: at least 8 chars, 1 uppercase, 1 lowercase, 1 digit
-        if len(password) < 8 or \
-           not re.search(r'[A-Z]', password) or \
-           not re.search(r'[a-z]', password) or \
-           not re.search(r'\d', password):
-            error = "Password must be at least 8 characters long and include an uppercase letter, a lowercase letter, and a digit."
-        elif not (name and username and email and password and role):
-            error = "All fields are required."
-        elif User.objects.filter(username=username).exists():
-            error = "Username already exists."
-        elif User.objects.filter(email=email).exists():
-            error = "Email already exists."
+        # default role is client; only superusers can create admins
+        role = 'client'
+        if form.is_valid():
+            username = form.cleaned_data['username']
+            email = form.cleaned_data['email']
+            password = form.cleaned_data['password']
+            if User.objects.filter(username=username).exists():
+                error = "Username already exists."
+            elif User.objects.filter(email=email).exists():
+                error = "Email already exists."
+            else:
+                user = User.objects.create_user(
+                    username=username,
+                    email=email,
+                    password=password,
+                    first_name=name
+                )
+                # If the request is by a logged-in superuser and explicitly requested admin, allow it
+                requested_role = request.POST.get('role', 'client')
+                if request.user.is_authenticated and request.user.is_superuser and requested_role == 'admin':
+                    role = 'admin'
+                UserProfile.objects.create(user=user, role=role)
+                return redirect(reverse('login') + '?registered=1')
         else:
-            user = User.objects.create_user(
-                username=username,
-                email=email,
-                password=password,
-                first_name=name
-            )
-            UserProfile.objects.create(user=user, role=role)
-            return redirect(reverse('login') + '?registered=1')
-    return render(request, "main/register.html", {"error": error})
+            error = form.errors.as_json()
+    else:
+        form = RegisterForm()
+    return render(request, "main/register.html", {"error": error, 'form': form})
 
 def login_view(request):
     error = None
@@ -153,16 +157,17 @@ def edit_task(request, task_id):
     task = get_object_or_404(Task, id=task_id)
     error = None
     if request.method == "POST":
-        task.title = request.POST.get('title', task.title)
-        task.platform = request.POST.get('platform', task.platform)
-        task.location = request.POST.get('location', task.location)
-        task.status = request.POST.get('status', task.status)
-        task.start_time = request.POST.get('start_time', task.start_time)
-        task.end_time = request.POST.get('end_time', task.end_time)
-        task.retries = request.POST.get('retries', task.retries)
-        task.save()
-        return redirect('task_list')
-    return render(request, "main/task_form.html", {"task": task, "error": error, "action": "Edit"})
+        if not (request.user.is_superuser or getattr(getattr(request.user, 'userprofile', None), 'role', '') == 'admin'):
+            return redirect('task_list')
+        form = TaskForm(request.POST, instance=task)
+        if form.is_valid():
+            form.save()
+            return redirect('task_list')
+        else:
+            error = form.errors
+    else:
+        form = TaskForm(instance=task)
+    return render(request, "main/task_form.html", {"form": form, "task": task, "error": error, "action": "Edit"})
 
 @login_required
 def cancel_task(request, task_id):
@@ -178,7 +183,7 @@ def cancel_task(request, task_id):
 @login_required
 @require_POST
 def delete_task(request, task_id):
-    if request.session.get('selected_role') != 'admin':
+    if not (request.user.is_superuser or getattr(getattr(request.user, 'userprofile', None), 'role', '') == 'admin'):
         return JsonResponse({'success': False, 'error': 'Permission denied.'})
     task = get_object_or_404(Task, id=task_id)
     task.delete()
@@ -188,27 +193,20 @@ def delete_task(request, task_id):
 def add_task(request):
     error = None
     if request.method == "POST":
-        title = request.POST.get('title', '').strip()
-        platform = request.POST.get('platform', '').strip()
-        location = request.POST.get('location', '').strip()
-        status = request.POST.get('status', '').strip()
-        start_time = request.POST.get('start_time', '').strip()
-        end_time = request.POST.get('end_time', '').strip()
-        retries = request.POST.get('retries', '0').strip()
-        if not (title and platform and location and status and start_time):
-            error = "All fields except End Time are required."
-        else:
-            Task.objects.create(
-                title=title,
-                platform=platform,
-                location=location,
-                status=status,
-                start_time=start_time,
-                end_time=end_time,
-                retries=int(retries) if retries.isdigit() else 0
-            )
+        # Only admins can add tasks
+        if not (request.user.is_superuser or getattr(getattr(request.user, 'userprofile', None), 'role', '') == 'admin'):
             return redirect('task_list')
-    return render(request, "main/task_form.html", {"error": error, "action": "Add"})
+        form = TaskForm(request.POST)
+        if form.is_valid():
+            task = form.save(commit=False)
+            task.owner = request.user
+            task.save()
+            return redirect('task_list')
+        else:
+            error = form.errors
+    else:
+        form = TaskForm()
+    return render(request, "main/task_form.html", {"form": form, "error": error, "action": "Add"})
 
 @require_POST
 @login_required
@@ -216,7 +214,7 @@ def ajax_cancel_task(request, task_id):
     from .models import Task
     task = get_object_or_404(Task, id=task_id)
     # Only allow admin to cancel
-    if request.session.get('selected_role') != 'admin':
+    if not (request.user.is_superuser or getattr(getattr(request.user, 'userprofile', None), 'role', '') == 'admin'):
         return JsonResponse({'success': False, 'error': 'Permission denied.'}, status=403)
     task.status = 'cancelled'
     task.save()
