@@ -11,6 +11,9 @@ on:
 jobs:
   lint:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: task-management-app
     steps:
       - uses: actions/checkout@v4
       - name: Set up Python
@@ -28,6 +31,9 @@ jobs:
   test:
     runs-on: ubuntu-latest
     needs: lint
+    defaults:
+      run:
+        working-directory: task-management-app
     steps:
       - uses: actions/checkout@v4
       - name: Set up Python
