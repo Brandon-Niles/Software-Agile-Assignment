@@ -13,4 +13,10 @@ urlpatterns = [
     path('tasks/<int:task_id>/cancel/', views.cancel_task, name='cancel_task'),
     path('ajax/cancel-task/<int:task_id>/', views.ajax_cancel_task, name='ajax_cancel_task'),
     path('delete/<int:task_id>/', views.delete_task, name='delete_task'),
+    # New tab pages
+    path('dashboard/', views.dashboard_view, name='dashboard'),
+    path('pages/tasks/', views.tasks_page, name='tasks_page'),
+    path('pages/users/', views.users_page, name='users_page'),
+    path('pages/reports/', views.reports_page, name='reports_page'),
+    path('pages/settings/', views.settings_page, name='settings_page'),
 ]

@@ -19,6 +19,7 @@ from django.http import HttpResponse
 from django.views.decorators.cache import never_cache
 import os
 from pathlib import Path
+from django.contrib.admin.views.decorators import staff_member_required
 
 
 def user_is_admin(user):
@@ -234,6 +235,150 @@ def api_stats(request):
 
     return render(request, 'main/task_system.html', context)
 
+
+@login_required
+def dashboard_view(request):
+    # reuse summary stats from task_list but lighter
+    all_tasks = Task.objects.all()
+    context = {
+        'total_count': all_tasks.count(),
+        'pending_count': all_tasks.filter(status__iexact='pending').count(),
+        'running_count': all_tasks.filter(status__iexact='running').count(),
+        'completed_count': all_tasks.filter(status__iexact='completed').count(),
+        'cancelled_count': all_tasks.filter(status__iexact='cancelled').count(),
+        'app_version': Path(__file__).resolve().parents[1].joinpath('VERSION').read_text().strip() if Path(__file__).resolve().parents[1].joinpath('VERSION').exists() else '0.0.0'
+    }
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        html = render_to_string('main/partials/dashboard_fragment.html', context, request=request)
+        return HttpResponse(html)
+    return render(request, 'main/tabs/dashboard.html', context)
+
+
+@login_required
+def tasks_page(request):
+    # Build the same context as task_list but return a fragment for AJAX requests
+    search = request.GET.get('search', '').strip()
+    tasks = Task.objects.all()
+
+    # Filtering by dropdowns
+    title = request.GET.get('title', '')
+    platform = request.GET.get('platform', '')
+    location = request.GET.get('location', '')
+    status = request.GET.get('status', '')
+    start_time = request.GET.get('start_time', '')
+    end_time = request.GET.get('end_time', '')
+    retries = request.GET.get('retries', '')
+
+    if title:
+        tasks = tasks.filter(title=title)
+    if platform:
+        tasks = tasks.filter(platform=platform)
+    if location:
+        tasks = tasks.filter(location=location)
+    if status:
+        tasks = tasks.filter(status=status)
+    if start_time:
+        tasks = tasks.filter(start_time=start_time)
+    if end_time:
+        tasks = tasks.filter(end_time=end_time)
+    if retries:
+        tasks = tasks.filter(retries=retries)
+
+    if search:
+        tasks = tasks.filter(
+            Q(title__icontains=search) |
+            Q(platform__icontains=search) |
+            Q(location__icontains=search) |
+            Q(status__icontains=search) |
+            Q(start_time__icontains=search) |
+            Q(end_time__icontains=search) |
+            Q(retries__icontains=search)
+        )
+
+    tasks = tasks.order_by('id')
+    paginator = Paginator(tasks, 50)
+    page_number = request.GET.get('page', 1)
+    page_obj = paginator.get_page(page_number)
+
+    page_tasks = list(page_obj.object_list)
+    def unique(seq, key=lambda x: x):
+        seen = set(); out = []
+        for v in seq:
+            k = key(v)
+            if k not in seen:
+                seen.add(k); out.append(k)
+        return out
+
+    titles = unique(page_tasks, key=lambda t: t.title)
+    platforms = unique(page_tasks, key=lambda t: t.platform)
+    locations = unique(page_tasks, key=lambda t: t.location)
+    statuses = unique(page_tasks, key=lambda t: t.status)
+    start_times = unique(page_tasks, key=lambda t: t.start_time)
+    end_times = unique(page_tasks, key=lambda t: t.end_time)
+    retries_list = unique(page_tasks, key=lambda t: t.retries)
+
+    selected_role = request.session.get('selected_role', '')
+
+    all_tasks = Task.objects.all()
+    context = {
+        'tasks': page_obj.object_list,
+        'page_obj': page_obj,
+        'search': search,
+        'selected_role': selected_role,
+        'titles': titles,
+        'platforms': platforms,
+        'locations': locations,
+        'statuses': statuses,
+        'start_times': start_times,
+        'end_times': end_times,
+        'retries': retries_list,
+        'total_count': all_tasks.count(),
+        'pending_count': all_tasks.filter(status__iexact='pending').count(),
+        'running_count': all_tasks.filter(status__iexact='running').count(),
+        'completed_count': all_tasks.filter(status__iexact='completed').count(),
+        'cancelled_count': all_tasks.filter(status__iexact='cancelled').count(),
+    }
+
+    try:
+        base = Path(__file__).resolve().parents[1]
+        version_file = base / 'VERSION'
+        if version_file.exists():
+            context['app_version'] = version_file.read_text().strip()
+        else:
+            context['app_version'] = '0.0.0'
+    except Exception:
+        context['app_version'] = '0.0.0'
+
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        html = render_to_string('main/partials/tasks_fragment.html', context, request=request)
+        return HttpResponse(html)
+    return render(request, 'main/tabs/tasks.html', context)
+
+
+@staff_member_required
+def users_page(request):
+    users = User.objects.all().order_by('-date_joined')[:200]
+    context = {'users': users}
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        return HttpResponse(render_to_string('main/partials/users_fragment.html', context, request=request))
+    return render(request, 'main/tabs/users.html', context)
+
+
+@login_required
+def reports_page(request):
+    context = {}
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        return HttpResponse(render_to_string('main/partials/reports_fragment.html', context, request=request))
+    return render(request, 'main/tabs/reports.html', context)
+
+
+@login_required
+def settings_page(request):
+    context = {}
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        return HttpResponse(render_to_string('main/partials/settings_fragment.html', context, request=request))
+    return render(request, 'main/tabs/settings.html', context)
+
 @admin_required
 @login_required
 def edit_task(request, task_id):
@@ -298,6 +443,16 @@ def add_task(request):
             task = form.save(commit=False)
             task.owner = request.user
             task.save()
+            # If this was an AJAX request, return JSON so client can update counts without reload
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse({'success': True, 'task': {
+                    'id': task.id,
+                    'title': task.title,
+                    'status': task.status,
+                    'start_time': str(task.start_time),
+                    'end_time': str(task.end_time),
+                    'retries': task.retries,
+                }})
             return redirect('task_list')
         else:
             error = form.errors

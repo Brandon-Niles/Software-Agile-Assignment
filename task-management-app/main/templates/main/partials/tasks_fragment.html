@@ -1,0 +1,49 @@
+<div class="page-header"><h1>Tasks</h1><p>Full task management interface</p></div>
+<form method="get" action="{% url 'task_list' %}" id="search-form">
+    <div class="toolbar">
+        <div class="search-wrap">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            <input class="search-input" type="text" name="search" id="search-input" value="{{ search|default:'' }}" placeholder="Search tasks..." autocomplete="off">
+        </div>
+        <button type="submit" class="search-btn">Search</button>
+        <div style="flex:1"></div>
+        {% if selected_role == 'admin' %}
+            <button type="button" class="add-task-btn" onclick="window.location.href='{% url 'add_task' %}'">Add Task</button>
+        {% endif %}
+    </div>
+</form>
+
+<div class="table-wrap">
+    <form method="get" id="filter-form">
+        <table>
+            <thead>
+                <tr>
+                    <th style="width:48px">#</th>
+                    <th>Title</th>
+                    <th>Platform</th>
+                    <th>Location</th>
+                    <th>Status</th>
+                    <th>Start</th>
+                    <th>End</th>
+                    <th>Retries</th>
+                    <th style="text-align:center">Actions</th>
+                </tr>
+            </thead>
+            <tbody id="task-table-body">
+                {% include 'main/task_table_rows.html' with selected_role=selected_role %}
+            </tbody>
+        </table>
+    </form>
+</div>
+
+<div class="pagination-bar">
+    {% if page_obj.has_previous %}
+        <a class="page-link" href="?search={{ search }}&page={{ page_obj.previous_page_number }}">&laquo; Prev</a>
+    {% endif %}
+    <span class="page-info">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+    {% if page_obj.has_next %}
+        <a class="page-link" href="?search={{ search }}&page={{ page_obj.next_page_number }}">Next &raquo;</a>
+    {% endif %}
+</div>

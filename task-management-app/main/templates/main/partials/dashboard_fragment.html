@@ -1,0 +1,54 @@
+<div class="page-header">
+    <h1>Dashboard</h1>
+    <p>Overview of tasks and system status</p>
+</div>
+<div style="display:grid;grid-template-columns:320px 1fr;gap:1rem;margin-bottom:1.25rem;align-items:start;">
+    <div class="stat-card chart-card" style="padding:1rem;max-height:320px;overflow:hidden;" data-pending="{{ pending_count }}" data-running="{{ running_count }}" data-completed="{{ completed_count }}" data-cancelled="{{ cancelled_count }}" data-total="{{ total_count }}">
+        <div class="stat-label">Task Status Overview</div>
+        <canvas id="statusChartAjax" style="margin-top:0.8rem"></canvas>
+    </div>
+    <div class="stat-card" style="padding:1rem;">
+        <div class="stat-label">Live Summary</div>
+        <div style="display:flex;gap:1rem;margin-top:0.8rem;flex-wrap:wrap;">
+            <div style="min-width:140px">
+                <div class="stat-label">Total</div>
+                <div class="stat-value" id="stat-total">{{ total_count }}</div>
+            </div>
+            <div style="min-width:140px">
+                <div class="stat-label">Completed</div>
+                <div class="stat-value" id="stat-completed">{{ completed_count }}</div>
+            </div>
+            <div style="min-width:140px">
+                <div class="stat-label">Running</div>
+                <div class="stat-value" id="stat-running">{{ running_count }}</div>
+            </div>
+            <div style="min-width:140px">
+                <div class="stat-label">Pending</div>
+                <div class="stat-value" id="stat-pending">{{ pending_count }}</div>
+            </div>
+        </div>
+        <p style="color:var(--text-secondary);margin-top:0.9rem;font-size:0.9rem;">This dashboard polls the server every 5 seconds and updates counts and the chart.</p>
+    </div>
+</div>
+<div class="stats-grid">
+    <div class="stat-card stat-total">
+        <div class="stat-label">Total Tasks</div>
+        <div class="stat-value">{{ total_count }}</div>
+    </div>
+    <div class="stat-card stat-pending">
+        <div class="stat-label">Pending</div>
+        <div class="stat-value">{{ pending_count }}</div>
+    </div>
+    <div class="stat-card stat-running">
+        <div class="stat-label">Running</div>
+        <div class="stat-value">{{ running_count }}</div>
+    </div>
+    <div class="stat-card stat-completed">
+        <div class="stat-label">Completed</div>
+        <div class="stat-value">{{ completed_count }}</div>
+    </div>
+    <div class="stat-card stat-cancelled">
+        <div class="stat-label">Cancelled</div>
+        <div class="stat-value">{{ cancelled_count }}</div>
+    </div>
+</div>

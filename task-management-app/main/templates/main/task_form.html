@@ -192,5 +192,63 @@
             </div>
         </form>
     </div>
+    <script>
+        (function(){
+            const action = '{{ action|escapejs }}';
+            if(action !== 'Add') return;
+            const form = document.querySelector('form');
+            if(!form) return;
+            function getCsrf(){
+                const el = form.querySelector('input[name="csrfmiddlewaretoken"]');
+                if(el) return el.value;
+                return document.cookie.match(/csrftoken=([^;]+)/)?.[1] || '';
+            }
+            form.addEventListener('submit', function(e){
+                e.preventDefault();
+                const fd = new FormData(form);
+                const csrf = getCsrf();
+                fetch(form.action || window.location.href, {
+                    method: 'POST',
+                    body: fd,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRFToken': csrf
+                    },
+                    credentials: 'same-origin'
+                }).then(async function(r){
+                    const ct = r.headers.get('content-type')||'';
+                    if(ct.indexOf('application/json') !== -1){
+                        const data = await r.json();
+                        if(data && data.success){
+                            // update counts and chart
+                            const status = data.task && data.task.status ? data.task.status : 'Pending';
+                            try{ if(typeof adjustTaskCounts === 'function') adjustTaskCounts(1, {[status]:1}); }catch(e){}
+                            // if tasks tab panel exists, force reload
+                            const panel = document.getElementById('tab-tasks');
+                            if(panel){ panel.dataset.loaded = '0'; if(typeof window.activateTab === 'function') window.activateTab('tasks', true); }
+                            // show inline success
+                            form.querySelectorAll('.field-error').forEach(n=>n.remove());
+                            const banner = document.createElement('div'); banner.className='error-banner'; banner.style.background='rgba(16,185,129,0.06)'; banner.style.border='1px solid rgba(16,185,129,0.12)'; banner.style.color='#059669'; banner.textContent = 'Task created.';
+                            form.prepend(banner);
+                            setTimeout(()=>banner.remove(),3000);
+                            // reset form fields
+                            form.reset();
+                        } else {
+                            alert('Failed to add task');
+                        }
+                    } else {
+                        // server returned HTML (form with errors) -> replace form card
+                        const html = await r.text();
+                        try{
+                            const tmp = document.createElement('div'); tmp.innerHTML = html;
+                            const newCard = tmp.querySelector('.form-card');
+                            const oldCard = document.querySelector('.form-card');
+                            if(newCard && oldCard) oldCard.replaceWith(newCard);
+                        }catch(e){ location.reload(); }
+                    }
+                }).catch(function(){ alert('Network error'); });
+            });
+        })();
+    </script>
 </body>
 </html>
