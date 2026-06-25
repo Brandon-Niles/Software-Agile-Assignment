@@ -21,16 +21,16 @@ class Command(BaseCommand):
         Task.objects.all().delete()
         # Ensure sample admin and client users exist
         admin_user, _ = User.objects.get_or_create(username='admin')
-        if not admin_user.has_usable_password():
-            admin_user.set_password('adminpass')
+        # Always reset seeded admin password to known value for testing
+        admin_user.set_password('adminpass')
         admin_user.is_superuser = True
         admin_user.is_staff = True
         admin_user.save()
         UserProfile.objects.get_or_create(user=admin_user, defaults={'role': 'admin'})
 
         client_user, _ = User.objects.get_or_create(username='user')
-        if not client_user.has_usable_password():
-            client_user.set_password('userpass')
+        # Always reset seeded regular user password to known value for testing
+        client_user.set_password('userpass')
         client_user.is_staff = False
         client_user.is_superuser = False
         client_user.save()

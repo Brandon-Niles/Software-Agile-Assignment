@@ -15,14 +15,17 @@ import re
 from .forms import TaskForm, RegisterForm
 from .decorators import admin_required
 from django.core.exceptions import ObjectDoesNotExist
+from django.http import HttpResponse
+from django.views.decorators.cache import never_cache
 
 
 def user_is_admin(user):
-    if not user or not user.is_authenticated:
-        return False
-    if user.is_superuser:
-        return True
     try:
+        if not user or not user.is_authenticated:
+            return False
+        # superusers should be considered admins as well
+        if getattr(user, 'is_superuser', False):
+            return True
         return getattr(user.userprofile, 'role', '') == 'admin'
     except ObjectDoesNotExist:
         return False
@@ -45,10 +48,10 @@ def register_view(request):
     error = None
     if request.method == "POST":
         form = RegisterForm(request.POST)
-        name = request.POST.get("name", "").strip()
         # default role is client; only superusers can create admins
         role = 'client'
         if form.is_valid():
+            name = form.cleaned_data.get('first_name', '').strip()
             username = form.cleaned_data['username']
             email = form.cleaned_data['email']
             password = form.cleaned_data['password']
@@ -195,6 +198,26 @@ def task_list(request):
             'user': request.user,
         })
         return JsonResponse({'html': html})
+
+    return render(request, 'main/task_system.html', context)
+
+
+@login_required
+@never_cache
+def api_stats(request):
+    """Return JSON with simple task statistics for dashboard charts."""
+    all_tasks = Task.objects.all()
+    data = {
+        'total': all_tasks.count(),
+        'by_status': {
+            'Pending': all_tasks.filter(status__iexact='pending').count(),
+            'Running': all_tasks.filter(status__iexact='running').count(),
+            'Completed': all_tasks.filter(status__iexact='completed').count(),
+            'Cancelled': all_tasks.filter(status__iexact='cancelled').count(),
+            'Failed': all_tasks.filter(status__iexact='failed').count(),
+        }
+    }
+    return JsonResponse(data)
 
     return render(request, 'main/task_system.html', context)
 
