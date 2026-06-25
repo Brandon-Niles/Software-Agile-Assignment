@@ -100,7 +100,7 @@ jobs:
     # - RENDER_SERVICE_ID: the Render service id to deploy
     # - RENDER_SERVICE_URL (optional): the public URL for convenience
     steps:
-      - name: Trigger Render deploy (improved)
+      - name: Trigger Render deploy
         env:
           RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
           RENDER_SERVICE_ID: ${{ secrets.RENDER_SERVICE_ID }}
@@ -111,13 +111,30 @@ jobs:
             exit 0;
           fi
           echo "Triggering deploy for Render service $RENDER_SERVICE_ID"
-          http_code=$(curl -s -o /tmp/render_resp -w "%{http_code}" -X POST "https://api.render.com/v1/services/$RENDER_SERVICE_ID/deploys" \
+          # write payload to file so we can inspect exact bytes
+          printf '%s' '{"clearCache":true}' > /tmp/payload.json
+          echo "--- payload.json ---"
+          cat /tmp/payload.json || true
+          echo "--- validate JSON with python (json.tool) ---"
+          if python -m json.tool /tmp/payload.json >/dev/null 2>&1; then
+            echo "json: valid"
+          else
+            echo "json: invalid"
+            cat /tmp/payload.json || true
+            exit 2
+          fi
+          echo "--- payload hexdump (bytes) ---"
+          od -An -t x1 /tmp/payload.json || true
+          # perform request with trace to capture request/response for debugging
+          http_code=$(curl -s -o /tmp/render_resp -w "%{http_code}" --trace-ascii /tmp/curl_trace -X POST "https://api.render.com/v1/services/$RENDER_SERVICE_ID/deploys" \
             -H "Authorization: Bearer $RENDER_API_KEY" \
             -H "Content-Type: application/json" \
-            --data-raw '{"clearCache":true}')
+            --data-binary @/tmp/payload.json)
           echo "HTTP status: $http_code"
-          echo "Response body:" 
+          echo "--- /tmp/render_resp ---"
           cat /tmp/render_resp || true
+          echo "--- /tmp/curl_trace ---"
+          sed -n '1,200p' /tmp/curl_trace || true
           echo "If your Render service is configured to pull from GHCR, it should start deploying."
           if [ -n "$RENDER_SERVICE_URL" ]; then
             echo "App URL: $RENDER_SERVICE_URL"
