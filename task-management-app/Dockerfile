@@ -16,4 +16,4 @@ EXPOSE 8000
 
 # Use Gunicorn for production and bind to the Render-provided $PORT (shell form expands env vars)
 ENV PORT=8000
-CMD gunicorn myproject.wsgi:application --bind 0.0.0.0:$PORT
+CMD python manage.py migrate --noinput && python manage.py collectstatic --noinput && gunicorn myproject.wsgi:application --bind 0.0.0.0:$PORT
