@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: task-app
+    runtime: docker
+    # Dockerfile and build context are inside the task-management-app subdirectory
+    dockerfilePath: task-management-app/Dockerfile
+    dockerContext: task-management-app
+    envVars:
+      - key: PORT
+        value: 8000
+      - key: SECRET_KEY
+        generateValue: true
+      # Add your Render service hostname here if you want to restrict ALLOWED_HOSTS further,
+      # e.g. ALLOWED_HOSTS=my-app.onrender.com
+      # By default settings.py already allows *.onrender.com
