@@ -68,20 +68,21 @@ class Task(models.Model):
                 raise ValidationError({'end_time': 'End time must be the same or after start time.'})
 
     def save(self, *args, **kwargs):
-        # Temporary debug: log saves to help find unexpected task creations during tests
-        try:
-            import traceback, sys
-            print(f"DEBUG Task.save called: title={self.title}, owner={getattr(self.owner, 'username', None)}")
-            traceback.print_stack(limit=5)
-        except Exception:
-            pass
         # Prevent saving if owner is explicitly set to a non-admin user.
         if self.owner is not None:
+            # Ensure UserProfile exists for the owner; create default client profile if missing.
             try:
-                if not (self.owner.is_superuser or getattr(self.owner.userprofile, 'role', '') == 'admin'):
-                    raise PermissionError('Only admin or superuser may be owner of a Task')
+                _ = self.owner.userprofile
             except Exception:
-                # If userprofile is missing or any error, be conservative and prevent save
+                try:
+                    UserProfile.objects.create(user=self.owner, role='client')
+                except Exception:
+                    # If we cannot create a profile, fall through and enforce stricter check below
+                    pass
+
+            # Now check permissions: allow if superuser or role == 'admin'
+            role = getattr(getattr(self.owner, 'userprofile', None), 'role', '')
+            if not (getattr(self.owner, 'is_superuser', False) or role == 'admin'):
                 raise PermissionError('Only admin or superuser may be owner of a Task')
         return super().save(*args, **kwargs)
 
