@@ -114,18 +114,32 @@ def task_list(request):
             Q(retries__icontains=search)
         )
 
-    # Get unique values for dropdowns
-    titles = Task.objects.values_list('title', flat=True).distinct()
-    platforms = Task.objects.values_list('platform', flat=True).distinct()
-    locations = Task.objects.values_list('location', flat=True).distinct()
-    statuses = Task.objects.values_list('status', flat=True).distinct()
-    start_times = Task.objects.values_list('start_time', flat=True).distinct()
-    end_times = Task.objects.values_list('end_time', flat=True).distinct()
-    retries_list = Task.objects.values_list('retries', flat=True).distinct()
+    # Order for deterministic pagination and derive dropdown values from filtered queryset
+    tasks = tasks.order_by('id')
 
-    paginator = Paginator(tasks, 50) 
+    paginator = Paginator(tasks, 50)
     page_number = request.GET.get('page', 1)
     page_obj = paginator.get_page(page_number)
+
+    # Derive dropdown values from the current page to avoid showing unrelated items
+    page_tasks = list(page_obj.object_list)
+    def unique(seq, key=lambda x: x):
+        seen = set()
+        out = []
+        for v in seq:
+            k = key(v)
+            if k not in seen:
+                seen.add(k)
+                out.append(k)
+        return out
+
+    titles = unique(page_tasks, key=lambda t: t.title)
+    platforms = unique(page_tasks, key=lambda t: t.platform)
+    locations = unique(page_tasks, key=lambda t: t.location)
+    statuses = unique(page_tasks, key=lambda t: t.status)
+    start_times = unique(page_tasks, key=lambda t: t.start_time)
+    end_times = unique(page_tasks, key=lambda t: t.end_time)
+    retries_list = unique(page_tasks, key=lambda t: t.retries)
 
     selected_role = request.session.get('selected_role', '')
 
