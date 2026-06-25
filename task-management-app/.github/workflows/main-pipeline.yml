@@ -21,9 +21,11 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
+        working-directory: task-management-app
       - name: Run flake8
         run: |
           flake8 || true
+        working-directory: task-management-app
 
   test:
     runs-on: ubuntu-latest
@@ -38,9 +40,11 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
+        working-directory: task-management-app
       - name: Run tests
         run: |
           python manage.py test --noinput
+        working-directory: task-management-app
 
   build-and-push:
     runs-on: ubuntu-latest
@@ -99,7 +103,7 @@ jobs:
             echo "Starting container"
             docker run -d --name task-app --restart unless-stopped -p 80:8000 $IMAGE
       - name: Register deployment URL in GitHub
-        if: ${{ secrets.DEPLOY_URL != '' }}
+        if: ${{ secrets.DEPLOY_URL }}
         uses: actions/github-script@v6
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
