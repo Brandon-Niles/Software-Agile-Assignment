@@ -128,7 +128,7 @@
             transition: border-color 0.2s, transform 0.15s;
         }
         /* Chart card fixed size to avoid stretching the page */
-        .chart-card { min-height: 320px; display:flex; flex-direction:column; }
+        .chart-card { min-height: 320px; max-height: 320px; display:flex; flex-direction:column; overflow:hidden; }
         .chart-card canvas { width:100% !important; height:100% !important; display:block }
         .stat-card:hover { border-color: var(--border-light); transform: translateY(-1px); }
         .stat-card .stat-label {
@@ -403,9 +403,9 @@
 
         <!-- Interactive Dashboard (charts) -->
         <div style="display:grid;grid-template-columns:320px 1fr;gap:1rem;margin-bottom:1.25rem;align-items:start;">
-            <div class="stat-card" style="padding:1rem;min-height:220px;">
+            <div class="stat-card chart-card" style="padding:1rem;max-height:320px;overflow:hidden;">
                 <div class="stat-label">Task Status Overview</div>
-                <canvas id="statusChart" width="300" height="200" style="margin-top:0.8rem"></canvas>
+                <canvas id="statusChart" style="margin-top:0.8rem"></canvas>
             </div>
             <div class="stat-card" style="padding:1rem;">
                 <div class="stat-label">Live Summary</div>
