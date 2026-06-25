@@ -229,7 +229,6 @@ def delete_task(request, task_id):
     task.delete()
     return JsonResponse({'success': True})
 
-@admin_required
 @login_required
 def add_task(request):
     # Immediate admin check to avoid executing any add logic for non-admins
@@ -244,20 +243,18 @@ def add_task(request):
             role = None
         # Final permission check before saving
         is_admin = user_is_admin(request.user)
-        print(f"DEBUG add_task: user={request.user.username}, is_admin={is_admin}, role={role}")
         if not is_admin:
             return redirect('task_list')
         form = TaskForm(request.POST)
         if form.is_valid():
-            print("DEBUG add_task: form is valid")
             task = form.save(commit=False)
             task.owner = request.user
             task.save()
-            print("DEBUG add_task: task saved")
             return redirect('task_list')
         else:
-            print("DEBUG add_task: form invalid", form.errors)
             error = form.errors
+            # Return the form with errors explicitly (status 200) so tests receive the form page
+            return render(request, "main/task_form.html", {"form": form, "error": error, "action": "Add", "task": None}, status=200)
     else:
         form = TaskForm()
     return render(request, "main/task_form.html", {"form": form, "error": error, "action": "Add", "task": None})
