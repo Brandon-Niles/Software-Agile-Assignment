@@ -23,6 +23,9 @@ def user_is_admin(user):
     try:
         if not user or not user.is_authenticated:
             return False
+        # superusers should be considered admins as well
+        if getattr(user, 'is_superuser', False):
+            return True
         return getattr(user.userprofile, 'role', '') == 'admin'
     except ObjectDoesNotExist:
         return False
