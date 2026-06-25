@@ -143,9 +143,10 @@
                     if(data && data.success){
                     // remove the row from table
                     const row = document.getElementById('task-row-' + _deleteTaskId);
-                    // determine status from row before removal
-                    let statusText = 'Pending';
-                    if(row){ const badge = row.querySelector('.status-badge'); if(badge) statusText = badge.textContent.trim(); }
+                    // prefer server-sent status for accuracy
+                    let statusText = (data && data.status) ? data.status : 'Pending';
+                    // fallback to badge text if server didn't return status
+                    if(statusText === 'Pending' && row){ const badge = row.querySelector('.status-badge'); if(badge) statusText = badge.textContent.trim(); }
                     if(row) row.remove();
                     // update counts and chart
                     const delta = {};

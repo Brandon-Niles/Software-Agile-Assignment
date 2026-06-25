@@ -431,8 +431,10 @@ def delete_task(request, task_id):
     if not user_is_admin(request.user):
         return JsonResponse({'success': False, 'error': 'Permission denied.'})
     task = get_object_or_404(Task, id=task_id)
+    # capture status before deletion so client can update counts reliably
+    task_status = getattr(task, 'status', None)
     task.delete()
-    return JsonResponse({'success': True})
+    return JsonResponse({'success': True, 'status': task_status})
 
 @login_required
 def add_task(request):
