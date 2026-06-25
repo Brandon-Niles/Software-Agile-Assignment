@@ -29,6 +29,18 @@ def user_is_admin(user):
     except Exception:
         return False
 
+
+class _EmptyTaskObj:
+    def __init__(self):
+        self.id = None
+        self.title = ''
+        self.platform = ''
+        self.location = ''
+        self.status = ''
+        self.start_time = ''
+        self.end_time = ''
+        self.retries = 0
+
 def register_view(request):
     error = None
     if request.method == "POST":
@@ -254,10 +266,12 @@ def add_task(request):
         else:
             error = form.errors
             # Return the form with errors explicitly (status 200) so tests receive the form page
-            return render(request, "main/task_form.html", {"form": form, "error": error, "action": "Add", "task": None}, status=200)
+            empty_task = _EmptyTaskObj()
+            return render(request, "main/task_form.html", {"form": form, "error": error, "action": "Add", "task": empty_task}, status=200)
     else:
         form = TaskForm()
-    return render(request, "main/task_form.html", {"form": form, "error": error, "action": "Add", "task": None})
+    empty_task = _EmptyTaskObj()
+    return render(request, "main/task_form.html", {"form": form, "error": error, "action": "Add", "task": empty_task})
 
 @require_POST
 @admin_required
