@@ -195,7 +195,7 @@
     <script>
         (function(){
             const action = '{{ action|escapejs }}';
-            if(action !== 'Add') return;
+            const isAdd = action === 'Add';
             const form = document.querySelector('form');
             if(!form) return;
             function getCsrf(){
@@ -220,19 +220,70 @@
                     if(ct.indexOf('application/json') !== -1){
                         const data = await r.json();
                         if(data && data.success){
-                            // update counts and chart
-                            const status = data.task && data.task.status ? data.task.status : 'Pending';
-                            try{ if(typeof adjustTaskCounts === 'function') adjustTaskCounts(1, {[status]:1}); }catch(e){}
-                            // if tasks tab panel exists, force reload
-                            const panel = document.getElementById('tab-tasks');
-                            if(panel){ panel.dataset.loaded = '0'; if(typeof window.activateTab === 'function') window.activateTab('tasks', true); }
-                            // show inline success
-                            form.querySelectorAll('.field-error').forEach(n=>n.remove());
-                            const banner = document.createElement('div'); banner.className='error-banner'; banner.style.background='rgba(16,185,129,0.06)'; banner.style.border='1px solid rgba(16,185,129,0.12)'; banner.style.color='#059669'; banner.textContent = 'Task created.';
-                            form.prepend(banner);
-                            setTimeout(()=>banner.remove(),3000);
-                            // reset form fields
-                            form.reset();
+                                if(isAdd){
+                                // update counts and chart for add
+                                const status = data.task && data.task.status ? data.task.status : 'Pending';
+                                try{ if(typeof adjustTaskCounts === 'function') adjustTaskCounts(1, {[status]:1}); }catch(e){}
+                                // if tasks tab panel exists, force reload but keep user on same tab
+                                const tasksBtn = document.querySelector('.tab-btn[data-tab="tasks"]');
+                                const panel = document.getElementById('tab-tasks');
+                                if(panel){
+                                    // if tasks tab is already active, reload fragment without updating history
+                                    if(tasksBtn && tasksBtn.getAttribute('aria-selected') === 'true'){
+                                        try{ if(typeof window.reloadTab === 'function') window.reloadTab('tasks'); }catch(e){}
+                                        // after reload, try to flash the new row
+                                        setTimeout(function(){
+                                            const newRow = document.getElementById('task-row-' + (data.task && data.task.id));
+                                            if(newRow){ newRow.classList.add('row-flash'); setTimeout(()=>newRow.classList.remove('row-flash'), 3000); }
+                                            // also flash the panel
+                                            try{ panel.classList.add('panel-flash'); setTimeout(()=>panel.classList.remove('panel-flash'), 3000); }catch(e){}
+                                        }, 600);
+                                    } else {
+                                        // not active: switch to tasks tab (preserve history behavior)
+                                        if(typeof window.activateTab === 'function') window.activateTab('tasks', true);
+                                    }
+                                }
+                                // show inline success
+                                form.querySelectorAll('.field-error').forEach(n=>n.remove());
+                                const banner = document.createElement('div'); banner.className='error-banner'; banner.style.background='rgba(16,185,129,0.06)'; banner.style.border='1px solid rgba(16,185,129,0.12)'; banner.style.color='#059669'; banner.textContent = 'Task created.';
+                                form.prepend(banner);
+                                setTimeout(()=>banner.remove(),3000);
+                                // reset form fields
+                                form.reset();
+                            } else {
+                                // Edit: update the row in-place if present
+                                const task = data.task || {};
+                                const id = task.id;
+                                const row = document.getElementById('task-row-' + id);
+                                const newStatus = task.status || 'Pending';
+                                if(row){
+                                    const oldStatus = row.dataset.status || (row.querySelector('.status-badge')?.textContent.trim() || 'Pending');
+                                    row.dataset.status = newStatus;
+                                    const tds = row.querySelectorAll('td');
+                                    if(tds && tds.length>=8){
+                                        tds[1].textContent = task.title || tds[1].textContent;
+                                        tds[2].textContent = task.platform || tds[2].textContent;
+                                        tds[3].textContent = task.location || tds[3].textContent;
+                                        // update status badge
+                                        const badge = tds[4].querySelector('.status-badge');
+                                        if(badge){ badge.className = 'status-badge status-' + newStatus.toLowerCase(); badge.textContent = newStatus.charAt(0).toUpperCase() + newStatus.slice(1); }
+                                        tds[5].textContent = task.start_time || tds[5].textContent;
+                                        tds[6].textContent = task.end_time || tds[6].textContent;
+                                        tds[7].textContent = task.retries !== undefined ? task.retries : tds[7].textContent;
+                                    }
+                                    // adjust counts if status changed
+                                    if(oldStatus !== newStatus){ const delta = {}; delta[oldStatus] = -1; delta[newStatus] = 1; try{ if(typeof adjustTaskCounts==='function') adjustTaskCounts(0, delta); }catch(e){} }
+                                    // show success
+                                    form.querySelectorAll('.field-error').forEach(n=>n.remove());
+                                    const banner = document.createElement('div'); banner.className='error-banner'; banner.style.background='rgba(16,185,129,0.06)'; banner.style.border='1px solid rgba(16,185,129,0.12)'; banner.style.color='#059669'; banner.textContent = 'Task updated.';
+                                    form.prepend(banner);
+                                    setTimeout(()=>banner.remove(),3000);
+                                } else {
+                                    // row not present (maybe different page) - reload tasks fragment and flash
+                                    const panel = document.getElementById('tab-tasks');
+                                    if(panel){ try{ if(typeof window.reloadTab === 'function') window.reloadTab('tasks'); panel.classList.add('panel-flash'); setTimeout(()=>panel.classList.remove('panel-flash'),3000); }catch(e){} }
+                                }
+                            }
                         } else {
                             alert('Failed to add task');
                         }

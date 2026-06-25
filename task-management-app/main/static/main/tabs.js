@@ -53,6 +53,17 @@
             }).catch(()=>{});
     }
 
+    // expose reload helper to other scripts
+    window.loadTabContent = loadTabContent;
+    window.reloadTab = function(name){
+        try{
+            const path = TAB_PATHS[name] || ('#'+name);
+            const panel = document.getElementById('tab-'+name);
+            if(panel) panel.dataset.loaded = '0';
+            loadTabContent(name, path);
+        }catch(e){}
+    };
+
     document.addEventListener('click', function(e){
         const btn = e.target.closest('.tab-btn');
         if(!btn) return;
@@ -93,9 +104,16 @@
     });
 
     document.addEventListener('DOMContentLoaded', function(){
-        // initialize from hash
-        const start = location.hash.replace('#','') || 'dashboard';
-        activateTab(start, false);
+        // initialize from hash or pathname (support full-page loads to /pages/tasks/ etc.)
+        let start = location.hash.replace('#','');
+        if(!start){
+            const path = location.pathname.replace(/^\/+|\/+$/g,'');
+            if(path.indexOf('pages/') === 0){ start = path.split('/').pop(); }
+            else if(path === 'dashboard' || path === 'pages/dashboard') start = 'dashboard';
+            else if(path === 'tasks' || path === 'pages/tasks') start = 'tasks';
+            else start = 'dashboard';
+        }
+        activateTab(start || 'dashboard', false);
         // expose for debugging
         window.activateTab = activateTab;
     });

@@ -1,6 +1,6 @@
 <tbody>
     {% for task in tasks %}
-    <tr id="task-row-{{ task.id }}">
+    <tr id="task-row-{{ task.id }}" data-status="{{ task.status }}">
         <td style="color:var(--text-muted);font-size:0.8rem;">{{ forloop.counter0|add:page_obj.start_index }}</td>
         <td style="font-weight:500;">{{ task.title }}</td>
         <td>{{ task.platform }}</td>
@@ -108,6 +108,11 @@
     .empty-state { text-align: center; padding: 3rem 1rem; color: #8892b0; }
     .empty-state svg { display: block; margin: 0 auto 0.75rem; color: #4a5568; }
 </style>
+<style>
+    .row-flash { animation: rowFlash 3s ease forwards; }
+    @keyframes rowFlash { 0% { background: rgba(16,185,129,0.18); } 60% { background: transparent; } 100% { background: transparent; } }
+    .panel-flash { box-shadow: 0 0 0 4px rgba(16,185,129,0.12) inset; transition: box-shadow 0.3s; }
+</style>
 <script>
     var _deleteTaskId = null;
     function openDeleteModal(taskId) {
@@ -131,7 +136,7 @@
                 },
                 credentials: 'same-origin'
             }).then(r=>r.json()).then(data=>{
-                if(data && data.success){
+                    if(data && data.success){
                     // remove the row from table
                     const row = document.getElementById('task-row-' + _deleteTaskId);
                     // determine status from row before removal
@@ -142,6 +147,11 @@
                     const delta = {};
                     delta[statusText] = -1;
                     adjustTaskCounts(-1, delta);
+                    // flash tasks panel to highlight change
+                    try{
+                        const panel = document.getElementById('tab-tasks');
+                        if(panel){ panel.classList.add('panel-flash'); setTimeout(()=>panel.classList.remove('panel-flash'),3000); }
+                    }catch(e){}
                     closeDeleteModal();
                 } else {
                     alert('Delete failed: ' + (data && data.error ? data.error : 'Unknown'));

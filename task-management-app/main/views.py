@@ -385,16 +385,28 @@ def edit_task(request, task_id):
     task = get_object_or_404(Task, id=task_id)
     # Immediate admin check to avoid executing any edit logic for non-admins
     if not user_is_admin(request.user):
-        return redirect('task_list')
+        return redirect('tasks_page')
     error = None
     if request.method == "POST":
         # Final permission check before saving
         if not user_is_admin(request.user):
-            return redirect('task_list')
+            return redirect('tasks_page')
         form = TaskForm(request.POST, instance=task)
         if form.is_valid():
-            form.save()
-            return redirect('task_list')
+            task = form.save()
+            # If AJAX, return JSON with updated task info for client update
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse({'success': True, 'task': {
+                    'id': task.id,
+                    'title': task.title,
+                    'status': task.status,
+                    'platform': task.platform,
+                    'location': task.location,
+                    'start_time': str(task.start_time),
+                    'end_time': str(task.end_time),
+                    'retries': task.retries,
+                }})
+            return redirect('tasks_page')
         else:
             error = form.errors
     else:
@@ -405,12 +417,12 @@ def edit_task(request, task_id):
 @login_required
 def cancel_task(request, task_id):
     if not request.user.is_superuser:
-        return redirect('task_list')
+        return redirect('tasks_page')
     task = get_object_or_404(Task, id=task_id)
     if request.method == 'POST':
         task.status = 'Cancelled'
         task.save()
-        return redirect('task_list')
+        return redirect('tasks_page')
     return render(request, 'main/cancel_task.html', {'task': task})
 
 @login_required
@@ -426,7 +438,7 @@ def delete_task(request, task_id):
 def add_task(request):
     # Immediate admin check to avoid executing any add logic for non-admins
     if not user_is_admin(request.user):
-        return redirect('task_list')
+        return redirect('tasks_page')
     error = None
     if request.method == "POST":
         # Only admins can add tasks
@@ -437,7 +449,7 @@ def add_task(request):
         # Final permission check before saving
         is_admin = user_is_admin(request.user)
         if not is_admin:
-            return redirect('task_list')
+            return redirect('tasks_page')
         form = TaskForm(request.POST)
         if form.is_valid():
             task = form.save(commit=False)
@@ -453,7 +465,7 @@ def add_task(request):
                     'end_time': str(task.end_time),
                     'retries': task.retries,
                 }})
-            return redirect('task_list')
+            return redirect('tasks_page')
         else:
             error = form.errors
             # Return the form with errors explicitly (status 200) so tests receive the form page
