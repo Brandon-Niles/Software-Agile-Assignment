@@ -4,188 +4,148 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Register — Task Management</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-        body {
-            background: #050d1a;
-            color: #e6f1ff;
-            font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 1.5rem 1rem;
-        }
-        body::before {
-            content: '';
-            position: fixed; inset: 0;
-            background-image:
-                linear-gradient(rgba(100,255,218,0.03) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(100,255,218,0.03) 1px, transparent 1px);
-            background-size: 48px 48px;
-            pointer-events: none;
-        }
-        .auth-card {
-            background: #0f2235;
-            border: 1px solid #1e3a5a;
-            border-radius: 16px;
-            padding: 2.5rem 2.5rem 2rem;
-            width: 100%;
-            max-width: 440px;
-            box-shadow: 0 24px 64px rgba(0,0,0,0.5);
-            position: relative;
-        }
-        .auth-card::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 50%; transform: translateX(-50%);
-            width: 60%; height: 1px;
-            background: linear-gradient(90deg, transparent, rgba(100,255,218,0.4), transparent);
-        }
-        .auth-logo {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.6rem;
-            margin-bottom: 1.5rem;
-        }
-        .auth-logo-icon {
-            width: 40px; height: 40px;
-            background: rgba(100,255,218,0.1);
-            border: 1px solid rgba(100,255,218,0.25);
-            border-radius: 10px;
-            display: flex; align-items: center; justify-content: center;
-            color: #64ffda;
-        }
-        .auth-logo-text { font-size: 1.15rem; font-weight: 700; color: #e6f1ff; }
-        .auth-title { text-align: center; font-size: 1.35rem; font-weight: 700; margin-bottom: 0.3rem; }
-        .auth-subtitle { text-align: center; font-size: 0.85rem; color: #8892b0; margin-bottom: 1.75rem; }
-        .form-group { margin-bottom: 1rem; }
-        .form-group label {
-            display: block;
-            font-size: 0.8rem;
-            font-weight: 600;
-            color: #8892b0;
-            text-transform: uppercase;
-            letter-spacing: 0.6px;
-            margin-bottom: 0.4rem;
-        }
-        .form-group input,
-        .form-group select {
-            width: 100%;
-            padding: 0.7em 1em;
-            background: #0a192f;
-            color: #e6f1ff;
-            border: 1px solid #1e3a5a;
-            border-radius: 8px;
-            font-size: 0.92rem;
-            font-family: inherit;
-            outline: none;
-            transition: border-color 0.2s, box-shadow 0.2s;
-            appearance: none;
-        }
-        .form-group input:focus,
-        .form-group select:focus {
-            border-color: #64ffda;
-            box-shadow: 0 0 0 3px rgba(100,255,218,0.15);
-        }
-        .form-group input::placeholder { color: #4a5568; }
-        .form-group select option { background: #0a192f; }
-        .error-msg {
-            display: flex;
-            align-items: flex-start;
-            gap: 0.5rem;
-            background: rgba(255,83,112,0.1);
-            border: 1px solid rgba(255,83,112,0.25);
-            color: #ff5370;
-            border-radius: 8px;
-            padding: 0.65em 1em;
-            font-size: 0.85rem;
-            margin-bottom: 1.25rem;
-        }
-        .submit-btn {
-            width: 100%;
-            padding: 0.75em;
-            background: #64ffda;
-            color: #050d1a;
-            border: none;
-            border-radius: 8px;
-            font-size: 0.95rem;
-            font-weight: 700;
-            font-family: inherit;
-            cursor: pointer;
-            margin-top: 0.5rem;
-            transition: opacity 0.2s, transform 0.15s;
-        }
-        .submit-btn:hover { opacity: 0.88; transform: translateY(-1px); }
-        .auth-footer {
-            text-align: center;
-            margin-top: 1.5rem;
-            font-size: 0.85rem;
-            color: #8892b0;
-        }
-        .auth-footer a { color: #64ffda; text-decoration: none; font-weight: 600; }
-        .auth-footer a:hover { text-decoration: underline; }
+        :root{--bg:#f6f9fc;--card:#ffffff;--accent:#2563eb;--muted:#64748b;--text:#0f172a}
+        *{box-sizing:border-box;margin:0;padding:0}
+        body{font-family:Inter,Segoe UI,Arial,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:2rem}
+        .card{background:var(--card);border-radius:12px;box-shadow:0 8px 30px rgba(15,23,42,0.06);width:100%;max-width:520px;padding:2rem}
+        h2{font-size:1.25rem;margin-bottom:0.5rem}
+        p.lead{color:var(--muted);margin-bottom:1rem}
+        .row{display:grid;grid-template-columns:1fr 1fr;gap:0.75rem}
+        label{display:block;font-size:0.78rem;color:var(--muted);font-weight:600;margin-bottom:0.35rem}
+        input{width:100%;padding:0.6rem 0.85rem;border:1px solid #e6edf3;border-radius:8px;background:#fff}
+        .actions{display:flex;gap:0.75rem;margin-top:1rem}
+        .btn{padding:0.7rem 1rem;border-radius:8px;border:none;cursor:pointer}
+        .btn-primary{background:var(--accent);color:#fff}
+        .btn-ghost{background:transparent;border:1px solid #e6edf3;color:var(--text)}
+        .note{margin-top:0.85rem;color:var(--muted);font-size:0.9rem}
+        .error{background:rgba(220,38,38,0.06);border:1px solid rgba(220,38,38,0.12);color:#b91c1c;padding:0.6rem;border-radius:8px;margin-bottom:0.75rem}
+        .field-error{color:#b91c1c;font-size:0.85rem;margin-top:0.35rem}
     </style>
 </head>
 <body>
-    <div class="auth-card">
-        <div class="auth-logo">
-            <div class="auth-logo-icon">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
-                    <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
-                </svg>
-            </div>
-            <span class="auth-logo-text">TaskManager</span>
-        </div>
-        <h1 class="auth-title">Create account</h1>
-        <p class="auth-subtitle">Fill in the details below to get started</p>
+    <div class="card">
+        <h2>Create an account</h2>
+        <p class="lead">Register to access the Task Management system. Passwords must meet the project's policy.</p>
 
         {% if error %}
-            <div class="error-msg">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="flex-shrink:0;margin-top:2px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                <span>{{ error }}</span>
-            </div>
+            <div class="error">{{ error }}</div>
+        {% endif %}
+        {% if form.non_field_errors %}
+            <div class="error">{{ form.non_field_errors }}</div>
         {% endif %}
 
-        <form method="post">
+        <form method="post" novalidate>
             {% csrf_token %}
-            <div class="form-group">
-                <label for="name">Full Name</label>
-                <input type="text" name="name" id="name" maxlength="150" placeholder="Your full name" required>
+            <div style="margin-bottom:0.75rem">
+                <label for="name">Full name</label>
+                <input id="name" name="name" required value="{{ form.first_name.value|default_if_none:'' }}">
+                {% for err in form.first_name.errors %}<div class="field-error">{{ err }}</div>{% endfor %}
             </div>
-            <div class="form-group">
+            <div style="margin-bottom:0.75rem">
                 <label for="username">Username</label>
-                <input type="text" name="username" id="username" maxlength="150" placeholder="Choose a username" required>
+                <input id="username" name="username" required value="{{ form.username.value|default_if_none:'' }}">
+                {% for err in form.username.errors %}<div class="field-error">{{ err }}</div>{% endfor %}
             </div>
-            <div class="form-group">
+            <div style="margin-bottom:0.75rem">
                 <label for="email">Email</label>
-                <input type="email" name="email" id="email" maxlength="254" placeholder="you@example.com" required>
+                <input id="email" name="email" type="email" required value="{{ form.email.value|default_if_none:'' }}">
+                {% for err in form.email.errors %}<div class="field-error">{{ err }}</div>{% endfor %}
             </div>
-            <div class="form-group">
-                <label for="password">Password</label>
-                <input type="password" name="password" id="password" placeholder="Create a password" required>
-            </div>
-            {% if request.user.is_authenticated and request.user.is_superuser %}
-                <div class="form-group">
-                    <label for="role">Role</label>
-                    <select name="role" id="role" required>
-                        <option value="client">User</option>
-                        <option value="admin">Admin</option>
-                    </select>
+            <div class="row">
+                <div>
+                    <label for="password">Password</label>
+                    <input id="password" name="password" type="password" required>
+                    {% for err in form.password.errors %}<div class="field-error">{{ err }}</div>{% endfor %}
+                    <div id="pw-strength" style="margin-top:0.5rem">
+                        <div style="height:8px;background:#eef2ff;border-radius:6px;overflow:hidden"><div id="pw-bar" style="width:0%;height:100%;background:var(--accent);transition:width 160ms ease"></div></div>
+                        <div id="pw-label" style="font-size:0.85rem;color:var(--muted);margin-top:0.35rem">Strength: —</div>
+                    </div>
                 </div>
-            {% else %}
-                <input type="hidden" name="role" value="client">
-            {% endif %}
-            <button type="submit" class="submit-btn">Create Account</button>
-        </form>
+                <div>
+                    <label for="password_confirm">Confirm password</label>
+                    <input id="password_confirm" name="password_confirm" type="password" required>
+                    {% for err in form.password_confirm.errors %}<div class="field-error">{{ err }}</div>{% endfor %}
+                </div>
+            </div>
 
-        <div class="auth-footer">
-            Already have an account? <a href="{% url 'login' %}">Sign in</a>
-        </div>
+            <div class="note">Note: Admin accounts can only be created by an administrator.</div>
+
+            <div class="actions">
+                <button type="submit" class="btn btn-primary">Register</button>
+                <a href="{% url 'login' %}" class="btn btn-ghost">Back to sign in</a>
+            </div>
+        </form>
     </div>
+    <script>
+        function avatarSVGData(text, size){
+            size = size || 64;
+            const initials = (text||'').trim().split(/\s+/).slice(0,2).map(s=>s[0]?s[0].toUpperCase():'').join('') || 'U';
+            const colors = ['#2563eb','#7c3aed','#06b6d4','#10b981','#f59e0b','#ef4444','#8b5cf6'];
+            let hash = 0; for (let i=0;i<text.length;i++){ hash = text.charCodeAt(i) + ((hash<<5)-hash); }
+            const color = colors[Math.abs(hash) % colors.length];
+            const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='${size}' height='${size}' viewBox='0 0 ${size} ${size}'><rect width='100%' height='100%' rx='12' fill='${color}'/><text x='50%' y='50%' dy='.1em' fill='#fff' font-family='Inter,Arial,Helvetica,sans-serif' font-size='${Math.floor(size*0.4)}' font-weight='700' text-anchor='middle'>${initials}</text></svg>`;
+            return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
+        }
+
+        document.addEventListener('DOMContentLoaded', function(){
+            const form = document.querySelector('form');
+            const nameInput = document.getElementById('name');
+            const usernameInput = document.getElementById('username');
+            const emailInput = document.getElementById('email');
+            const password = document.getElementById('password');
+            const confirm = document.getElementById('password_confirm');
+
+            // insert avatar preview
+            const preview = document.createElement('div'); preview.style.display='flex'; preview.style.gap='0.75rem'; preview.style.alignItems='center'; preview.style.marginBottom='0.75rem';
+            const img = document.createElement('img'); img.width=64; img.height=64; img.style.borderRadius='12px'; img.alt='avatar';
+            const hint = document.createElement('div'); hint.innerHTML = '<div style="font-weight:700">Avatar preview</div><div style="color:var(--muted);font-size:0.9rem">Updates as you type</div>';
+            preview.appendChild(img); preview.appendChild(hint);
+            form.insertBefore(preview, form.firstChild);
+
+            function updateAvatar(){ const text = nameInput.value || usernameInput.value || ''; img.src = avatarSVGData(text,64); }
+            nameInput.addEventListener('input', updateAvatar);
+            usernameInput.addEventListener('input', updateAvatar);
+            updateAvatar();
+
+            // Password strength meter
+            const pwBar = document.getElementById('pw-bar');
+            const pwLabel = document.getElementById('pw-label');
+            function scorePassword(pw){
+                let score = 0;
+                if(!pw) return 0;
+                if(pw.length >= 8) score += 1;
+                if(pw.length >= 12) score += 1;
+                if(/[a-z]/.test(pw) && /[A-Z]/.test(pw)) score += 1;
+                if(/[0-9]/.test(pw)) score += 1;
+                if(/[^A-Za-z0-9]/.test(pw)) score += 1;
+                return score; // 0..5
+            }
+            function updateStrength(){ const s = scorePassword(password.value); const pct = Math.round(s/5*100); pwBar.style.width = pct + '%';
+                if(s<=1){ pwBar.style.background='#ef4444'; pwLabel.textContent='Strength: Very weak'; }
+                else if(s==2){ pwBar.style.background='#f59e0b'; pwLabel.textContent='Strength: Weak'; }
+                else if(s==3){ pwBar.style.background='#f59e0b'; pwLabel.textContent='Strength: Fair'; }
+                else if(s==4){ pwBar.style.background='#10b981'; pwLabel.textContent='Strength: Good'; }
+                else { pwBar.style.background='#2563eb'; pwLabel.textContent='Strength: Strong'; }
+            }
+            password.addEventListener('input', updateStrength);
+            updateStrength();
+
+            function showError(el,msg){ const d = document.createElement('div'); d.className='field-error'; d.textContent = msg; el.parentNode.appendChild(d); }
+
+            form.addEventListener('submit', function(e){
+                // remove previous field errors
+                form.querySelectorAll('.field-error').forEach(n=>n.remove());
+                let ok = true;
+                const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if(!emailRe.test(emailInput.value)){ showError(emailInput,'Enter a valid email address'); ok = false; }
+                if(password.value.length < 8){ showError(password,'Password must be at least 8 characters'); ok = false; }
+                if(!(/[0-9]/.test(password.value) && /[a-zA-Z]/.test(password.value))){ showError(password,'Password must contain letters and numbers'); ok = false; }
+                if(password.value !== confirm.value){ showError(confirm,'Passwords do not match'); ok = false; }
+                if(!ok){ e.preventDefault(); }
+            });
+        });
+    </script>
 </body>
 </html>

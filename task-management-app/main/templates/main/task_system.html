@@ -378,8 +378,52 @@
     <div class="page-content">
         <!-- Page header -->
         <div class="page-header">
-            <h1>Tasks</h1>
-            <p>Manage and monitor all system tasks</p>
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:1rem;">
+                <div>
+                    <h1>Tasks</h1>
+                    <p>Manage and monitor all system tasks</p>
+                </div>
+                <div style="display:flex;align-items:center;gap:1rem;">
+                    <div style="background:var(--bg-card);border:1px solid var(--border);padding:0.6rem 0.9rem;border-radius:10px;display:flex;gap:0.75rem;align-items:center;min-width:220px;box-shadow:0 6px 20px rgba(15,23,42,0.04);">
+                        <div id="user-avatar" data-username="{{ user.get_full_name|default:user.username }}" style="width:46px;height:46px;border-radius:10px;overflow:hidden;display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--accent)"></div>
+                        <div>
+                            <div style="font-weight:700">{{ user.username }}</div>
+                            <div style="font-size:0.85rem;color:var(--text-secondary);">{{ user.email|default:'—' }}</div>
+                            <div style="font-size:0.78rem;color:var(--text-muted);margin-top:0.15rem">Role: {% if selected_role %}{{ selected_role|title }}{% else %}Client{% endif %}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Interactive Dashboard (charts) -->
+        <div style="display:grid;grid-template-columns:320px 1fr;gap:1rem;margin-bottom:1.25rem;align-items:start;">
+            <div class="stat-card" style="padding:1rem;min-height:220px;">
+                <div class="stat-label">Task Status Overview</div>
+                <canvas id="statusChart" width="300" height="200" style="margin-top:0.8rem"></canvas>
+            </div>
+            <div class="stat-card" style="padding:1rem;">
+                <div class="stat-label">Live Summary</div>
+                <div style="display:flex;gap:1rem;margin-top:0.8rem;flex-wrap:wrap;">
+                    <div style="min-width:140px">
+                        <div class="stat-label">Total</div>
+                        <div class="stat-value" id="stat-total">{{ total_count }}</div>
+                    </div>
+                    <div style="min-width:140px">
+                        <div class="stat-label">Completed</div>
+                        <div class="stat-value" id="stat-completed">{{ completed_count }}</div>
+                    </div>
+                    <div style="min-width:140px">
+                        <div class="stat-label">Running</div>
+                        <div class="stat-value" id="stat-running">{{ running_count }}</div>
+                    </div>
+                    <div style="min-width:140px">
+                        <div class="stat-label">Pending</div>
+                        <div class="stat-value" id="stat-pending">{{ pending_count }}</div>
+                    </div>
+                </div>
+                <p style="color:var(--text-secondary);margin-top:0.9rem;font-size:0.9rem;">This dashboard polls the server every 5 seconds and updates counts and the chart.</p>
+            </div>
         </div>
 
         <!-- Stats grid -->
@@ -569,6 +613,69 @@
                 }, 300);
             });
         });
+        
+        // Dashboard charts — Chart.js
+        (function() {
+            const script = document.createElement('script');
+            script.src = 'https://cdn.jsdelivr.net/npm/chart.js';
+            script.onload = function() {
+                const ctx = document.getElementById('statusChart').getContext('2d');
+                const statusChart = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Pending','Running','Completed','Cancelled','Failed'],
+                        datasets: [{
+                            data: [{{ pending_count }}, {{ running_count }}, {{ completed_count }}, {{ cancelled_count }}, 0],
+                            backgroundColor: ['#f59e0b','#0ea5e9','#10b981','#dc2626','#f97316']
+                        }]
+                    },
+                    options: {plugins:{legend:{position:'bottom'}},maintainAspectRatio:false}
+                });
+
+                function fetchStats(){
+                    fetch("{% url 'api_stats' %}")
+                        .then(r=>r.json())
+                        .then(data=>{
+                            const by = data.by_status || {};
+                            const values = [by.Pending||0, by.Running||0, by.Completed||0, by.Cancelled||0, by.Failed||0];
+                            statusChart.data.datasets[0].data = values;
+                            statusChart.update();
+                            // Update stat cards
+                            document.getElementById('stat-total').textContent = data.total || 0;
+                            document.getElementById('stat-completed').textContent = by.Completed || 0;
+                            document.getElementById('stat-running').textContent = by.Running || 0;
+                            document.getElementById('stat-pending').textContent = by.Pending || 0;
+                        })
+                        .catch(()=>{});
+                }
+
+                // Poll every 5s
+                setInterval(fetchStats, 5000);
+                // initial
+                fetchStats();
+            };
+            document.head.appendChild(script);
+        })();
+
+        // Generate user avatar SVG for dashboard
+        (function(){
+            function avatarData(text,size){
+                size = size||46;
+                const initials = (text||'').trim().split(/\s+/).slice(0,2).map(s=>s[0]?s[0].toUpperCase():'').join('')||'U';
+                const colors = ['#2563eb','#7c3aed','#06b6d4','#10b981','#f59e0b','#ef4444','#8b5cf6'];
+                let hash=0; for(let i=0;i<text.length;i++){ hash = text.charCodeAt(i) + ((hash<<5)-hash); }
+                const color = colors[Math.abs(hash)%colors.length];
+                const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='${size}' height='${size}' viewBox='0 0 ${size} ${size}'><rect width='100%' height='100%' rx='8' fill='${color}'/><text x='50%' y='50%' dy='.1em' fill='#fff' font-family='Inter,Arial' font-size='${Math.floor(size*0.45)}' font-weight='700' text-anchor='middle'>${initials}</text></svg>`;
+                return 'data:image/svg+xml;utf8,'+encodeURIComponent(svg);
+            }
+            document.addEventListener('DOMContentLoaded', function(){
+                const el = document.getElementById('user-avatar');
+                if(!el) return;
+                const username = el.dataset.username || 'User';
+                const img = document.createElement('img'); img.src = avatarData(username,46); img.width=46; img.height=46; img.style.borderRadius='10px';
+                el.appendChild(img);
+            });
+        })();
     </script>
 </body>
 </html>

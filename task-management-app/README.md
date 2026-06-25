@@ -21,6 +21,9 @@ export DEBUG=1 && python manage.py runserver 0.0.0.0:8000
 
 After running `generate_tasks` the database will contain 500 sample tasks and the two users above.
 
+Registration
+- User self-registration is enabled. The seeded accounts (`admin`/`adminpass`, `user`/`userpass`) are available for testing; new users can also register via the web UI.
+
 Notes
 - The project reads `DEBUG` from the environment. Set `DEBUG=1` for a local/dev HTTP server without production-only security headers (HSTS, secure cookies).
 - The `docker-compose.dev.yml` file starts the app with `DEBUG=1` already.

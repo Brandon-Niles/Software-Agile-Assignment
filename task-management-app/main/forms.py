@@ -63,9 +63,11 @@ class TaskForm(forms.ModelForm):
 
 class RegisterForm(forms.ModelForm):
     password = forms.CharField(widget=forms.PasswordInput)
+    password_confirm = forms.CharField(widget=forms.PasswordInput, required=True)
+
     class Meta:
         model = User
-        fields = ['username', 'email', 'password']
+        fields = ['first_name', 'username', 'email', 'password']
 
     def clean_password(self):
         password = self.cleaned_data.get('password')
@@ -74,3 +76,11 @@ class RegisterForm(forms.ModelForm):
         except ValidationError as e:
             raise forms.ValidationError(e.messages)
         return password
+
+    def clean(self):
+        cleaned = super().clean()
+        pw = cleaned.get('password')
+        pw2 = cleaned.get('password_confirm')
+        if pw and pw2 and pw != pw2:
+            self.add_error('password_confirm', 'Passwords do not match')
+        return cleaned
