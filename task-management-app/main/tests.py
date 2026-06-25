@@ -2,6 +2,7 @@ from django.test import TestCase, Client
 from django.urls import reverse
 from django.contrib.auth.models import User
 from .models import Task
+from django.core.exceptions import ValidationError
 
 class TaskModelTest(TestCase):
     def test_create_task(self):
@@ -126,3 +127,63 @@ class TaskViewTest(TestCase):
         self.assertEqual(response.status_code, 302)
         task.refresh_from_db()
         self.assertNotEqual(task.title, 'Should Not Edit')
+
+    def test_invalid_retries_validation(self):
+        self.client.login(username='admin', password='adminpass')
+        response = self.client.post(reverse('add_task'), {
+            'title': 'Invalid Retries',
+            'platform': 'Windows',
+            'location': 'NY',
+            'status': 'Running',
+            'start_time': '2024-01-01 09:00',
+            'end_time': '2024-01-01 10:00',
+            'retries': -1
+        })
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(Task.objects.filter(title='Invalid Retries').exists())
+        self.assertIn('Retries must be zero or positive', response.content.decode())
+
+    def test_invalid_time_format_validation(self):
+        self.client.login(username='admin', password='adminpass')
+        response = self.client.post(reverse('add_task'), {
+            'title': 'Bad Time',
+            'platform': 'Windows',
+            'location': 'NY',
+            'status': 'Running',
+            'start_time': 'not-a-date',
+            'end_time': '2024/01/01',
+            'retries': 0
+        })
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(Task.objects.filter(title='Bad Time').exists())
+        self.assertIn('Invalid date/time format', response.content.decode())
+
+    def test_end_before_start_validation(self):
+        self.client.login(username='admin', password='adminpass')
+        response = self.client.post(reverse('add_task'), {
+            'title': 'End Before Start',
+            'platform': 'Windows',
+            'location': 'NY',
+            'status': 'Running',
+            'start_time': '2024-01-01 10:00',
+            'end_time': '2024-01-01 09:00',
+            'retries': 0
+        })
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(Task.objects.filter(title='End Before Start').exists())
+        self.assertIn('End time must be the same or after start time', response.content.decode())
+
+
+class TaskValidationTest(TestCase):
+    def test_model_full_clean_raises_for_end_before_start(self):
+        task = Task(
+            title='Model Check',
+            platform='Linux',
+            location='London',
+            status='Pending',
+            start_time='2024-01-01 10:00',
+            end_time='2024-01-01 09:00',
+            retries=0
+        )
+        with self.assertRaises(ValidationError):
+            task.full_clean()

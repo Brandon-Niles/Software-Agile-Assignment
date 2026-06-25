@@ -212,6 +212,7 @@ def delete_task(request, task_id):
 @login_required
 def add_task(request):
     error = None
+    task = Task()
     if request.method == "POST":
         # Only admins can add tasks
         if not (request.user.is_superuser or getattr(getattr(request.user, 'userprofile', None), 'role', '') == 'admin'):
@@ -226,7 +227,7 @@ def add_task(request):
             error = form.errors
     else:
         form = TaskForm()
-    return render(request, "main/task_form.html", {"form": form, "error": error, "action": "Add"})
+    return render(request, "main/task_form.html", {"form": form, "error": error, "action": "Add", "task": task})
 
 @require_POST
 @login_required
