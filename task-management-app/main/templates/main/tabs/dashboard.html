@@ -1,0 +1,15 @@
+{% extends 'main/task_system.html' %}
+{% block content %}
+<div class="page-content">
+    <div class="page-header">
+        <h1>Dashboard</h1>
+        <p>Overview of tasks and system status</p>
+    </div>
+    <div class="stats-grid">
+        <div class="stat-card stat-total"><div class="stat-label">Total Tasks</div><div class="stat-value">{{ total_count }}</div></div>
+        <div class="stat-card stat-completed"><div class="stat-label">Completed</div><div class="stat-value">{{ completed_count }}</div></div>
+        <div class="stat-card stat-running"><div class="stat-label">Running</div><div class="stat-value">{{ running_count }}</div></div>
+        <div class="stat-card stat-pending"><div class="stat-label">Pending</div><div class="stat-value">{{ pending_count }}</div></div>
+    </div>
+</div>
+{% endblock %}
