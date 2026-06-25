@@ -77,3 +77,38 @@ jobs:
       - name: Announce deployment
         run: |
           echo "Image pushed: ghcr.io/${{ github.repository }}/task-app:dev-${{ github.sha }}"
+      - name: Deploy to remote host via SSH
+        if: ${{ secrets.SSH_PRIVATE_KEY != '' }}
+        uses: appleboy/ssh-action@v0.1.7
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.DEPLOY_PORT || '22' }}
+          script: |
+            set -e
+            IMAGE=ghcr.io/${{ github.repository }}/task-app:dev-${{ github.sha }}
+            echo "Pulling image $IMAGE"
+            docker pull $IMAGE
+            echo "Stopping existing container (if any)"
+            docker rm -f task-app || true
+            echo "Starting container"
+            docker run -d --name task-app --restart unless-stopped -p 80:8000 $IMAGE
+      - name: Register deployment URL in GitHub
+        if: ${{ secrets.DEPLOY_URL != '' }}
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const owner = context.repo.owner
+            const repo = context.repo.repo
+            const ref = process.env.GITHUB_SHA || context.sha
+            const env = 'dev'
+            const url = process.env.DEPLOY_URL
+            const dep = await github.rest.repos.createDeployment({
+              owner, repo, ref, environment: env, required_contexts: []
+            })
+            await github.rest.repos.createDeploymentStatus({
+              owner, repo, deployment_id: dep.data.id, state: 'success', environment_url: url
+            })
+            core.notice(`Registered deployment URL: ${url}`)
