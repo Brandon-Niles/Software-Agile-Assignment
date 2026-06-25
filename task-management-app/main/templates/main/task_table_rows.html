@@ -127,7 +127,8 @@
     document.getElementById('delete-confirm-btn').addEventListener('click', function() {
         if (_deleteTaskId) {
             const csrf = document.cookie.match(/csrftoken=([^;]+)/)?.[1] || '';
-            fetch('/tasks/' + _deleteTaskId + '/delete/', {
+            // correct delete endpoint is /delete/<id>/ (not /tasks/<id>/delete/)
+            fetch('/delete/' + _deleteTaskId + '/', {
                 method: 'POST',
                 headers: {
                     'X-CSRFToken': csrf,
@@ -135,7 +136,10 @@
                     'Content-Type': 'application/json'
                 },
                 credentials: 'same-origin'
-            }).then(r=>r.json()).then(data=>{
+            }).then(r=>{
+                if(!r.ok){ return r.text().then(t=>{ throw new Error('HTTP '+r.status+': '+t); }); }
+                return r.json();
+            }).then(data=>{
                     if(data && data.success){
                     // remove the row from table
                     const row = document.getElementById('task-row-' + _deleteTaskId);
@@ -153,10 +157,11 @@
                         if(panel){ panel.classList.add('panel-flash'); setTimeout(()=>panel.classList.remove('panel-flash'),3000); }
                     }catch(e){}
                     closeDeleteModal();
-                } else {
-                    alert('Delete failed: ' + (data && data.error ? data.error : 'Unknown'));
+                    } else {
+                    if(typeof showToast === 'function') showToast('Delete failed: ' + (data && data.error ? data.error : 'Unknown'), 'error');
+                    else alert('Delete failed: ' + (data && data.error ? data.error : 'Unknown'));
                 }
-            }).catch(()=>{ alert('Network error'); });
+            }).catch((err)=>{ if(typeof showToast === 'function') showToast('Network error: ' + (err && err.message ? err.message : err), 'error'); else alert('Network error: ' + (err && err.message ? err.message : err)); });
         }
     });
 </script>
