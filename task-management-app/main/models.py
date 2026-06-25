@@ -2,6 +2,8 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from datetime import datetime
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 
 
 
@@ -64,3 +66,31 @@ class Task(models.Model):
                 raise e
             if end_dt < start_dt:
                 raise ValidationError({'end_time': 'End time must be the same or after start time.'})
+
+    def save(self, *args, **kwargs):
+        # Temporary debug: log saves to help find unexpected task creations during tests
+        try:
+            import traceback, sys
+            print(f"DEBUG Task.save called: title={self.title}, owner={getattr(self.owner, 'username', None)}")
+            traceback.print_stack(limit=5)
+        except Exception:
+            pass
+        # Prevent saving if owner is explicitly set to a non-admin user.
+        if self.owner is not None:
+            try:
+                if not (self.owner.is_superuser or getattr(self.owner.userprofile, 'role', '') == 'admin'):
+                    raise PermissionError('Only admin or superuser may be owner of a Task')
+            except Exception:
+                # If userprofile is missing or any error, be conservative and prevent save
+                raise PermissionError('Only admin or superuser may be owner of a Task')
+        return super().save(*args, **kwargs)
+
+
+# Auto-create UserProfile when a new User is created to keep tests and runtime consistent
+@receiver(post_save, sender=User)
+def create_user_profile(sender, instance, created, **kwargs):
+    if created:
+        try:
+            UserProfile.objects.create(user=instance, role='client')
+        except Exception:
+            pass
