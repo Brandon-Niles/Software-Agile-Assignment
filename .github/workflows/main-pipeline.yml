@@ -131,10 +131,13 @@ jobs:
           fi
 
       - name: Wait for deploy and verify app is reachable
-        if: ${{ secrets.RENDER_SERVICE_URL != '' }}
         env:
           RENDER_SERVICE_URL: ${{ secrets.RENDER_SERVICE_URL }}
         run: |
+          if [ -z "$RENDER_SERVICE_URL" ]; then
+            echo "RENDER_SERVICE_URL not set — skipping health check."
+            exit 0
+          fi
           echo "Waiting for Render to finish deploying (up to 3 min)..."
           for i in $(seq 1 18); do
             sleep 10
