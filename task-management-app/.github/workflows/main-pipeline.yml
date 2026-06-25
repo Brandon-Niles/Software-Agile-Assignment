@@ -52,7 +52,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Read version file
         run: |
-          if [ -f VERSION ]; then echo "VERSION=$(cat VERSION)" >> $GITHUB_ENV; else echo "VERSION=0.0.0" >> $GITHUB_ENV; fi
+          if [ -f task-management-app/VERSION ]; then echo "VERSION=$(cat task-management-app/VERSION)" >> $GITHUB_ENV; else echo "VERSION=0.0.0" >> $GITHUB_ENV; fi
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
       - name: Set up Docker Buildx

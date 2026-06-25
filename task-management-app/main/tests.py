@@ -19,8 +19,18 @@ class TaskModelTest(TestCase):
 
 class TaskViewTest(TestCase):
     def setUp(self):
-        self.admin = User.objects.create_user(username='admin', password='adminpass', is_superuser=True)
-        self.user = User.objects.create_user(username='user', password='userpass')
+        self.admin, _ = User.objects.get_or_create(username='admin')
+        # ensure admin properties and password
+        self.admin.set_password('adminpass')
+        self.admin.is_superuser = True
+        self.admin.is_staff = True
+        self.admin.save()
+
+        self.user, _ = User.objects.get_or_create(username='user')
+        self.user.set_password('userpass')
+        self.user.is_staff = False
+        self.user.is_superuser = False
+        self.user.save()
         for i in range(60):
             Task.objects.create(
                 title=f"Task {i}",
