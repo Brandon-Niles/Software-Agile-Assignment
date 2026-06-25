@@ -257,8 +257,6 @@ def add_task(request):
             return redirect('task_list')
         else:
             print("DEBUG add_task: form invalid", form.errors)
-            
-        else:
             error = form.errors
     else:
         form = TaskForm()
