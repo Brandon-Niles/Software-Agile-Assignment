@@ -196,3 +196,29 @@ class TaskViewTest(TestCase):
         )
         with self.assertRaises(ValidationError):
             task.full_clean()
+
+    def test_ajax_delete_reduces_counts(self):
+        self.client.login(username='admin', password='adminpass')
+        total_before = Task.objects.count()
+        t = Task.objects.first()
+        resp = self.client.post(reverse('delete_task', args=[t.id]), {}, HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+        self.assertEqual(resp.status_code, 200)
+        self.assertTrue(resp.json().get('success'))
+        self.assertEqual(Task.objects.count(), total_before-1)
+
+    def test_ajax_add_increases_counts(self):
+        self.client.login(username='admin', password='adminpass')
+        total_before = Task.objects.count()
+        resp = self.client.post(reverse('add_task'), {
+            'title': 'Ajax Created',
+            'platform': 'Web',
+            'location': 'Remote',
+            'status': 'Pending',
+            'start_time': '2024-02-02 10:00',
+            'end_time': '2024-02-02 11:00',
+            'retries': 0
+        }, HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+        # Should return JSON success
+        self.assertEqual(resp.status_code, 200)
+        self.assertTrue(resp.json().get('success'))
+        self.assertEqual(Task.objects.count(), total_before+1)

@@ -145,6 +145,8 @@
             box-shadow: 0 0 0 4px var(--accent-glow);
         }
 
+        .tab-btn[aria-disabled="true"], .tab-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
         /* Focus styles for other interactive elements to match theme */
         .search-input:focus-visible, .add-task-btn:focus-visible, .logout-btn:focus-visible, .page-link:focus-visible, .action-btns a:focus-visible, .action-btns button:focus-visible {
             outline: none;
@@ -434,7 +436,11 @@
             <nav id="main-tablist" role="tablist" aria-label="Main tabs" style="display:flex;gap:0.5rem;">
                 <button id="tab-dashboard-btn" role="tab" aria-selected="true" aria-controls="tab-dashboard" tabindex="0" class="tab-btn" data-tab="dashboard">Dashboard</button>
                 <button id="tab-tasks-btn" role="tab" aria-selected="false" aria-controls="tab-tasks" tabindex="-1" class="tab-btn" data-tab="tasks">Tasks</button>
-                <button id="tab-users-btn" role="tab" aria-selected="false" aria-controls="tab-users" tabindex="-1" class="tab-btn" data-tab="users">Users</button>
+                {% if user.is_superuser or request.session.selected_role == 'admin' %}
+                    <button id="tab-users-btn" role="tab" aria-selected="false" aria-controls="tab-users" tabindex="-1" class="tab-btn" data-tab="users">Users</button>
+                {% else %}
+                    <button id="tab-users-btn" role="tab" aria-selected="false" aria-controls="tab-users" tabindex="-1" class="tab-btn" data-tab="users" aria-disabled="true" disabled>Users</button>
+                {% endif %}
                 <button id="tab-reports-btn" role="tab" aria-selected="false" aria-controls="tab-reports" tabindex="-1" class="tab-btn" data-tab="reports">Reports</button>
                 <button id="tab-settings-btn" role="tab" aria-selected="false" aria-controls="tab-settings" tabindex="-1" class="tab-btn" data-tab="settings">Settings</button>
             </nav>
@@ -758,7 +764,8 @@
         (function(){
             function avatarData(text,size){
                 size = size||46;
-                const initials = (text||'').trim().split(/\s+/).slice(0,2).map(s=>s[0]?s[0].toUpperCase():'').join('')||'U';
+                // Use a single initial to avoid duplicate letters appearing
+                const initials = ((text||'').trim().charAt(0) || 'U').toUpperCase();
                 const colors = ['#2563eb','#7c3aed','#06b6d4','#10b981','#f59e0b','#ef4444','#8b5cf6'];
                 let hash=0; for(let i=0;i<text.length;i++){ hash = text.charCodeAt(i) + ((hash<<5)-hash); }
                 const color = colors[Math.abs(hash)%colors.length];

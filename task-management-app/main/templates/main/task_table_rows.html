@@ -121,16 +121,32 @@
     }
     document.getElementById('delete-confirm-btn').addEventListener('click', function() {
         if (_deleteTaskId) {
-            var form = document.createElement('form');
-            form.method = 'post';
-            form.action = '/tasks/' + _deleteTaskId + '/delete/';
-            var csrf = document.createElement('input');
-            csrf.type = 'hidden';
-            csrf.name = 'csrfmiddlewaretoken';
-            csrf.value = document.cookie.match(/csrftoken=([^;]+)/)?.[1] || '';
-            form.appendChild(csrf);
-            document.body.appendChild(form);
-            form.submit();
+            const csrf = document.cookie.match(/csrftoken=([^;]+)/)?.[1] || '';
+            fetch('/tasks/' + _deleteTaskId + '/delete/', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrf,
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'same-origin'
+            }).then(r=>r.json()).then(data=>{
+                if(data && data.success){
+                    // remove the row from table
+                    const row = document.getElementById('task-row-' + _deleteTaskId);
+                    // determine status from row before removal
+                    let statusText = 'Pending';
+                    if(row){ const badge = row.querySelector('.status-badge'); if(badge) statusText = badge.textContent.trim(); }
+                    if(row) row.remove();
+                    // update counts and chart
+                    const delta = {};
+                    delta[statusText] = -1;
+                    adjustTaskCounts(-1, delta);
+                    closeDeleteModal();
+                } else {
+                    alert('Delete failed: ' + (data && data.error ? data.error : 'Unknown'));
+                }
+            }).catch(()=>{ alert('Network error'); });
         }
     });
 </script>

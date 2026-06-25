@@ -443,6 +443,16 @@ def add_task(request):
             task = form.save(commit=False)
             task.owner = request.user
             task.save()
+            # If this was an AJAX request, return JSON so client can update counts without reload
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse({'success': True, 'task': {
+                    'id': task.id,
+                    'title': task.title,
+                    'status': task.status,
+                    'start_time': str(task.start_time),
+                    'end_time': str(task.end_time),
+                    'retries': task.retries,
+                }})
             return redirect('task_list')
         else:
             error = form.errors
