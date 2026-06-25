@@ -143,6 +143,7 @@ def task_list(request):
 
     selected_role = request.session.get('selected_role', '')
 
+    all_tasks = Task.objects.all()
     context = {
         'tasks': page_obj.object_list,
         'page_obj': page_obj,
@@ -155,6 +156,11 @@ def task_list(request):
         'start_times': start_times,
         'end_times': end_times,
         'retries': retries_list,
+        'total_count': all_tasks.count(),
+        'pending_count': all_tasks.filter(status__iexact='pending').count(),
+        'running_count': all_tasks.filter(status__iexact='running').count(),
+        'completed_count': all_tasks.filter(status__iexact='completed').count(),
+        'cancelled_count': all_tasks.filter(status__iexact='cancelled').count(),
     }
 
     if request.headers.get('x-requested-with') == 'XMLHttpRequest':
