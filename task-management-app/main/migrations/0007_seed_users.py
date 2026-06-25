@@ -1,4 +1,5 @@
 from django.db import migrations
+from django.contrib.auth.hashers import make_password
 
 
 def create_seed_users(apps, schema_editor):
@@ -9,7 +10,7 @@ def create_seed_users(apps, schema_editor):
     admin, created = User.objects.get_or_create(username='admin', defaults={
         'email': 'admin@example.com',
     })
-    admin.set_password('adminpass')
+    admin.password = make_password('adminpass')
     admin.is_superuser = True
     admin.is_staff = True
     admin.save()
@@ -19,7 +20,7 @@ def create_seed_users(apps, schema_editor):
     client, created = User.objects.get_or_create(username='user', defaults={
         'email': 'user@example.com',
     })
-    client.set_password('userpass')
+    client.password = make_password('userpass')
     client.is_superuser = False
     client.is_staff = False
     client.save()
