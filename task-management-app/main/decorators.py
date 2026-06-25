@@ -14,5 +14,6 @@ def admin_required(view_func):
                 return view_func(request, *args, **kwargs)
         except Exception:
             pass
-        return HttpResponseForbidden('Admin privileges required.')
+        # Redirect non-admin users to the task list to match previous behavior
+        return redirect('task_list')
     return _wrapped

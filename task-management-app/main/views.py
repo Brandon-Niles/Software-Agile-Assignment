@@ -14,6 +14,32 @@ from django.urls import reverse
 import re
 from .forms import TaskForm, RegisterForm
 from .decorators import admin_required
+from django.core.exceptions import ObjectDoesNotExist
+
+
+def user_is_admin(user):
+    if not user or not user.is_authenticated:
+        return False
+    if user.is_superuser:
+        return True
+    try:
+        return getattr(user.userprofile, 'role', '') == 'admin'
+    except ObjectDoesNotExist:
+        return False
+    except Exception:
+        return False
+
+
+class _EmptyTaskObj:
+    def __init__(self):
+        self.id = None
+        self.title = ''
+        self.platform = ''
+        self.location = ''
+        self.status = ''
+        self.start_time = ''
+        self.end_time = ''
+        self.retries = 0
 
 def register_view(request):
     error = None
@@ -172,12 +198,17 @@ def task_list(request):
 
     return render(request, 'main/task_system.html', context)
 
+@admin_required
 @login_required
 def edit_task(request, task_id):
     task = get_object_or_404(Task, id=task_id)
+    # Immediate admin check to avoid executing any edit logic for non-admins
+    if not user_is_admin(request.user):
+        return redirect('task_list')
     error = None
     if request.method == "POST":
-        if not (request.user.is_superuser or getattr(getattr(request.user, 'userprofile', None), 'role', '') == 'admin'):
+        # Final permission check before saving
+        if not user_is_admin(request.user):
             return redirect('task_list')
         form = TaskForm(request.POST, instance=task)
         if form.is_valid():
@@ -188,6 +219,7 @@ def edit_task(request, task_id):
     else:
         form = TaskForm(instance=task)
     return render(request, "main/task_form.html", {"form": form, "task": task, "error": error, "action": "Edit"})
+
 
 @login_required
 def cancel_task(request, task_id):
@@ -203,7 +235,7 @@ def cancel_task(request, task_id):
 @login_required
 @require_POST
 def delete_task(request, task_id):
-    if not (request.user.is_superuser or getattr(getattr(request.user, 'userprofile', None), 'role', '') == 'admin'):
+    if not user_is_admin(request.user):
         return JsonResponse({'success': False, 'error': 'Permission denied.'})
     task = get_object_or_404(Task, id=task_id)
     task.delete()
@@ -211,10 +243,19 @@ def delete_task(request, task_id):
 
 @login_required
 def add_task(request):
+    # Immediate admin check to avoid executing any add logic for non-admins
+    if not user_is_admin(request.user):
+        return redirect('task_list')
     error = None
     if request.method == "POST":
         # Only admins can add tasks
-        if not (request.user.is_superuser or getattr(getattr(request.user, 'userprofile', None), 'role', '') == 'admin'):
+        try:
+            role = getattr(request.user.userprofile, 'role', None)
+        except Exception:
+            role = None
+        # Final permission check before saving
+        is_admin = user_is_admin(request.user)
+        if not is_admin:
             return redirect('task_list')
         form = TaskForm(request.POST)
         if form.is_valid():
@@ -224,17 +265,22 @@ def add_task(request):
             return redirect('task_list')
         else:
             error = form.errors
+            # Return the form with errors explicitly (status 200) so tests receive the form page
+            empty_task = _EmptyTaskObj()
+            return render(request, "main/task_form.html", {"form": form, "error": error, "action": "Add", "task": empty_task}, status=200)
     else:
         form = TaskForm()
-    return render(request, "main/task_form.html", {"form": form, "error": error, "action": "Add"})
+    empty_task = _EmptyTaskObj()
+    return render(request, "main/task_form.html", {"form": form, "error": error, "action": "Add", "task": empty_task})
 
 @require_POST
+@admin_required
 @login_required
 def ajax_cancel_task(request, task_id):
     from .models import Task
     task = get_object_or_404(Task, id=task_id)
     # Only allow admin to cancel
-    if not (request.user.is_superuser or getattr(getattr(request.user, 'userprofile', None), 'role', '') == 'admin'):
+    if not user_is_admin(request.user):
         return JsonResponse({'success': False, 'error': 'Permission denied.'}, status=403)
     task.status = 'cancelled'
     task.save()
