@@ -1,77 +1,196 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>{{ action }} Task</title>
+    <title>{{ action }} Task — Task Management</title>
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body { background: #0a192f; color: #ccd6f6; font-family: Arial, sans-serif; }
-        .form-container {
-            background: #112240;
-            max-width: 400px;
-            margin: 60px auto;
-            padding: 2em 2.5em;
-            border-radius: 10px;
-            box-shadow: 0 2px 8px rgba(10,25,47,0.3);
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background: #050d1a;
+            color: #e6f1ff;
+            font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            padding: 3rem 1rem 2rem;
         }
-        .form-container h2 { color: #64ffda; text-align: center; }
-        .form-container label { color: #ccd6f6; margin-top: 1em; display: block; }
-        .form-container input, .form-container select {
-            width: 100%; padding: 0.6em; border-radius: 4px; border: 1px solid #233554;
-            background: #0a192f; color: #ccd6f6; margin-top: 0.2em;
+        body::before {
+            content: '';
+            position: fixed; inset: 0;
+            background-image:
+                linear-gradient(rgba(100,255,218,0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(100,255,218,0.03) 1px, transparent 1px);
+            background-size: 48px 48px;
+            pointer-events: none;
         }
-        .form-container button {
-            background: #64ffda; color: #0a192f; font-weight: bold; border: none;
-            border-radius: 6px; padding: 0.7em 1.5em; margin-top: 1.2em; width: 100%;
-            transition: background 0.2s, color 0.2s;
+        .form-card {
+            background: #0f2235;
+            border: 1px solid #1e3a5a;
+            border-radius: 16px;
+            padding: 2.5rem;
+            width: 100%;
+            max-width: 500px;
+            box-shadow: 0 24px 64px rgba(0,0,0,0.5);
+            position: relative;
         }
-        .form-container button:hover { background: #233554; color: #64ffda; }
-        .error { color: #ff5370; margin-top: 1em; text-align: center; }
+        .form-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 50%; transform: translateX(-50%);
+            width: 60%; height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(100,255,218,0.4), transparent);
+        }
+        .form-header { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 2rem; }
+        .form-header-icon {
+            width: 38px; height: 38px;
+            background: rgba(100,255,218,0.1);
+            border: 1px solid rgba(100,255,218,0.25);
+            border-radius: 9px;
+            display: flex; align-items: center; justify-content: center;
+            color: #64ffda; flex-shrink: 0;
+        }
+        .form-header h2 { font-size: 1.25rem; font-weight: 700; }
+        .form-group { margin-bottom: 1.1rem; }
+        .form-group label {
+            display: block;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #8892b0;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            margin-bottom: 0.4rem;
+        }
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 0.68em 1em;
+            background: #0a192f;
+            color: #e6f1ff;
+            border: 1px solid #1e3a5a;
+            border-radius: 8px;
+            font-size: 0.92rem;
+            font-family: inherit;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            appearance: none;
+        }
+        .form-group input:focus,
+        .form-group select:focus {
+            border-color: #64ffda;
+            box-shadow: 0 0 0 3px rgba(100,255,218,0.15);
+        }
+        .form-group select option { background: #0a192f; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem; }
+        .field-error { color: #ff5370; font-size: 0.78rem; margin-top: 0.3rem; }
+        .error-banner {
+            display: flex; align-items: center; gap: 0.5rem;
+            background: rgba(255,83,112,0.1);
+            border: 1px solid rgba(255,83,112,0.25);
+            color: #ff5370;
+            border-radius: 8px;
+            padding: 0.65em 1em;
+            font-size: 0.85rem;
+            margin-bottom: 1.25rem;
+        }
+        .action-btns { display: flex; gap: 0.75rem; margin-top: 1.75rem; }
+        .btn-primary {
+            flex: 1; padding: 0.72em;
+            background: #64ffda; color: #050d1a; border: none;
+            border-radius: 8px; font-size: 0.92rem; font-weight: 700;
+            font-family: inherit; cursor: pointer;
+            transition: opacity 0.2s, transform 0.15s;
+        }
+        .btn-primary:hover { opacity: 0.88; transform: translateY(-1px); }
+        .btn-secondary {
+            flex: 1; padding: 0.72em;
+            background: transparent; color: #8892b0;
+            border: 1px solid #1e3a5a; border-radius: 8px;
+            font-size: 0.92rem; font-weight: 600; font-family: inherit;
+            cursor: pointer; text-align: center; text-decoration: none;
+            transition: background 0.2s, color 0.2s, border-color 0.2s;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .btn-secondary:hover { background: #162d47; color: #e6f1ff; border-color: #243e5e; }
     </style>
 </head>
 <body>
-    <div class="form-container">
-        <h2>{{ action }} Task</h2>
+    <div class="form-card">
+        <div class="form-header">
+            <div class="form-header-icon">
+                {% if action == 'Edit' %}
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                {% else %}
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                {% endif %}
+            </div>
+            <h2>{{ action }} Task{% if task %} <span style="font-size:0.75rem;color:#8892b0;font-weight:400;">#{{ task.id }}</span>{% endif %}</h2>
+        </div>
+
         {% if error %}
-            <div class="error">{{ error }}</div>
+            <div class="error-banner">{{ error }}</div>
         {% endif %}
         {% if form.non_field_errors %}
-            <div class="error">{{ form.non_field_errors }}</div>
+            <div class="error-banner">{{ form.non_field_errors }}</div>
         {% endif %}
+
         <form method="post">
             {% csrf_token %}
-            <label for="title">Title</label>
-            <input type="text" name="title" id="title" value="{{ form.title.value|default:task.title|default_if_none:'' }}" required>
-            {% if form.title.errors %}<div class="error">{{ form.title.errors }}</div>{% endif %}
-
-            <label for="platform">Platform</label>
-            <input type="text" name="platform" id="platform" value="{{ form.platform.value|default:task.platform|default_if_none:'' }}" required>
-            {% if form.platform.errors %}<div class="error">{{ form.platform.errors }}</div>{% endif %}
-
-            <label for="location">Location</label>
-            <input type="text" name="location" id="location" value="{{ form.location.value|default:task.location|default_if_none:'' }}" required>
-            {% if form.location.errors %}<div class="error">{{ form.location.errors }}</div>{% endif %}
-
-            <label for="status">Status</label>
-            <input type="text" name="status" id="status" value="{{ form.status.value|default:task.status|default_if_none:'' }}" required>
-            {% if form.status.errors %}<div class="error">{{ form.status.errors }}</div>{% endif %}
-
-            <label for="start_time">Start Time</label>
-            <input type="text" name="start_time" id="start_time" value="{{ form.start_time.value|default:task.start_time|default_if_none:'' }}" required>
-            {% if form.start_time.errors %}<div class="error">{{ form.start_time.errors }}</div>{% endif %}
-
-            <label for="end_time">End Time</label>
-            <input type="text" name="end_time" id="end_time" value="{{ form.end_time.value|default:task.end_time|default_if_none:'' }}">
-            {% if form.end_time.errors %}<div class="error">{{ form.end_time.errors }}</div>{% endif %}
-
-            <label for="retries">Retries</label>
-            <input type="number" name="retries" id="retries" value="{{ form.retries.value|default:task.retries|default_if_none:0 }}" min="0">
-            {% if form.retries.errors %}<div class="error">{{ form.retries.errors }}</div>{% endif %}
-
-            <button type="submit">{{ action }} Task</button>
+            <div class="form-group">
+                <label for="title">Title</label>
+                <input type="text" name="title" id="title" value="{{ form.title.value|default:task.title|default_if_none:'' }}" required>
+                {% if form.title.errors %}<div class="field-error">{{ form.title.errors }}</div>{% endif %}
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="platform">Platform</label>
+                    <input type="text" name="platform" id="platform" value="{{ form.platform.value|default:task.platform|default_if_none:'' }}" required>
+                    {% if form.platform.errors %}<div class="field-error">{{ form.platform.errors }}</div>{% endif %}
+                </div>
+                <div class="form-group">
+                    <label for="location">Location</label>
+                    <input type="text" name="location" id="location" value="{{ form.location.value|default:task.location|default_if_none:'' }}" required>
+                    {% if form.location.errors %}<div class="field-error">{{ form.location.errors }}</div>{% endif %}
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="status">Status</label>
+                    <select name="status" id="status" required>
+                        {% for val, label in form.status.field.choices %}
+                            <option value="{{ val }}" {% if form.status.value == val or task.status == val %}selected{% endif %}>{{ label }}</option>
+                        {% empty %}
+                            <option value="{{ form.status.value|default:task.status|default_if_none:'' }}">{{ form.status.value|default:task.status|default_if_none:'' }}</option>
+                        {% endfor %}
+                    </select>
+                    {% if form.status.errors %}<div class="field-error">{{ form.status.errors }}</div>{% endif %}
+                </div>
+                <div class="form-group">
+                    <label for="retries">Retries</label>
+                    <input type="number" name="retries" id="retries" value="{{ form.retries.value|default:task.retries|default_if_none:0 }}" min="0">
+                    {% if form.retries.errors %}<div class="field-error">{{ form.retries.errors }}</div>{% endif %}
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="start_time">Start Time</label>
+                    <input type="text" name="start_time" id="start_time" value="{{ form.start_time.value|default:task.start_time|default_if_none:'' }}" required>
+                    {% if form.start_time.errors %}<div class="field-error">{{ form.start_time.errors }}</div>{% endif %}
+                </div>
+                <div class="form-group">
+                    <label for="end_time">End Time</label>
+                    <input type="text" name="end_time" id="end_time" value="{{ form.end_time.value|default:task.end_time|default_if_none:'' }}">
+                    {% if form.end_time.errors %}<div class="field-error">{{ form.end_time.errors }}</div>{% endif %}
+                </div>
+            </div>
+            <div class="action-btns">
+                <button type="submit" class="btn-primary">{{ action }} Task</button>
+                <a href="{% url 'task_list' %}" class="btn-secondary">Cancel</a>
+            </div>
         </form>
-        <div style="text-align:center; margin-top:1em;">
-            <a href="{% url 'task_list' %}" style="color:#64ffda;">Back to Task List</a>
-        </div>
     </div>
 </body>
 </html>

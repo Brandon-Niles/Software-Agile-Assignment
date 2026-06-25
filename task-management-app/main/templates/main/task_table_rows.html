@@ -1,213 +1,136 @@
 <tbody>
     {% for task in tasks %}
     <tr id="task-row-{{ task.id }}">
-        <td>{{ forloop.counter0|add:page_obj.start_index }}</td>
-        <td>{{ task.title }}</td>
+        <td style="color:var(--text-muted);font-size:0.8rem;">{{ forloop.counter0|add:page_obj.start_index }}</td>
+        <td style="font-weight:500;">{{ task.title }}</td>
         <td>{{ task.platform }}</td>
         <td>{{ task.location }}</td>
         <td>
-            <span class="status-label status-{{ task.status|lower }}">{{ task.status|capfirst }}</span>
+            <span class="status-badge status-{{ task.status|lower }}">{{ task.status|capfirst }}</span>
         </td>
-        <td>{{ task.start_time }}</td>
-        <td>{{ task.end_time }}</td>
-        <td>{{ task.retries }}</td>
+        <td style="color:var(--text-secondary);font-size:0.83rem;">{{ task.start_time }}</td>
+        <td style="color:var(--text-secondary);font-size:0.83rem;">{{ task.end_time }}</td>
+        <td style="text-align:center;">{{ task.retries }}</td>
         <td>
             <div class="action-btns">
                 <a href="{% url 'edit_task' task.id %}" class="edit-btn">Edit</a>
                 {% if selected_role == 'admin' %}
-                    <button type="button" class="delete-btn" onclick="confirmDelete({{ task.id }})">Delete</button>
+                    <button type="button" class="delete-btn" onclick="openDeleteModal({{ task.id }})">Delete</button>
                 {% else %}
-                    <button type="button" class="delete-btn delete-btn-disabled" disabled>Delete</button>
+                    <button type="button" class="delete-btn-disabled" disabled>Delete</button>
                 {% endif %}
             </div>
         </td>
     </tr>
+    {% empty %}
+    <tr>
+        <td colspan="9" class="empty-state">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <p>No tasks found.</p>
+        </td>
+    </tr>
     {% endfor %}
 </tbody>
-<!-- Confirmation Modal -->
-<div id="delete-modal" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:999;background:rgba(10,25,47,0.85);align-items:center;justify-content:center;">
-    <div style="background:#112240;padding:2em 2.5em;border-radius:10px;box-shadow:0 2px 8px rgba(100,255,218,0.15);text-align:center;min-width:260px;">
-        <h3 style="color:#ff5370;">Confirm Delete</h3>
-        <p style="color:#ccd6f6;">Are you sure you want to delete this task? This cannot be undone.</p>
-        <div style="margin-top:1.2em;display:flex;gap:1em;justify-content:center;">
-            <button id="delete-confirm-btn" style="background:#ff5370;color:#fff;border:none;border-radius:5px;padding:0.5em 1.2em;font-weight:bold;">Yes, Delete</button>
-            <button onclick="closeDeleteModal()" style="background:#233554;color:#fff;border:none;border-radius:5px;padding:0.5em 1.2em;font-weight:bold;">Cancel</button>
+
+<!-- Delete confirmation modal -->
+<div id="delete-modal" style="display:none;position:fixed;inset:0;z-index:999;background:rgba(5,13,26,0.85);align-items:center;justify-content:center;">
+    <div style="background:#0f2235;border:1px solid #1e3a5a;padding:2rem 2.5rem;border-radius:12px;box-shadow:0 16px 48px rgba(0,0,0,0.5);text-align:center;min-width:280px;max-width:360px;">
+        <div style="width:48px;height:48px;border-radius:50%;background:rgba(255,83,112,0.12);display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ff5370" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+        </div>
+        <h3 style="color:#e6f1ff;font-size:1.05rem;margin-bottom:0.5rem;">Delete Task?</h3>
+        <p style="color:#8892b0;font-size:0.88rem;margin-bottom:1.5rem;">This action cannot be undone.</p>
+        <div style="display:flex;gap:0.75rem;justify-content:center;">
+            <button id="delete-confirm-btn"
+                style="background:#ff5370;color:#fff;border:none;border-radius:7px;padding:0.55em 1.4em;font-weight:600;font-size:0.88rem;cursor:pointer;transition:background 0.2s;">
+                Yes, Delete
+            </button>
+            <button onclick="closeDeleteModal()"
+                style="background:transparent;color:#8892b0;border:1px solid #1e3a5a;border-radius:7px;padding:0.55em 1.4em;font-weight:500;font-size:0.88rem;cursor:pointer;transition:background 0.2s,color 0.2s;">
+                Cancel
+            </button>
         </div>
     </div>
 </div>
+
 <style>
-.cancel-popup {
-    display: none;
-    position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(10, 25, 47, 0.75);
-    z-index: 1000;
-    justify-content: center;
-    align-items: center;
-}
-.cancel-popup-content {
-    background: #112240;
-    color: #ccd6f6;
-    border-radius: 10px;
-    padding: 2em 2.5em;
-    box-shadow: 0 4px 24px rgba(100,255,218,0.15);
-    text-align: center;
-    min-width: 260px;
-}
-.popup-actions {
-    margin-top: 1.2em;
-    display: flex;
-    gap: 1em;
-    justify-content: center;
-}
-.popup-confirm {
-    background: #64ffda;
-    color: #0a192f;
-    border: none;
-    border-radius: 5px;
-    padding: 0.5em 1.2em;
-    font-weight: bold;
-    text-decoration: none;
-    transition: background 0.2s, color 0.2s;
-    box-shadow: 0 2px 8px rgba(100,255,218,0.10);
-}
-.popup-confirm:hover {
-    background: #233554;
-    color: #64ffda;
-}
-.popup-close {
-    background: #ff5370;
-    color: #fff;
-    border: none;
-    border-radius: 5px;
-    padding: 0.5em 1.2em;
-    font-weight: bold;
-    cursor: pointer;
-    transition: background 0.2s, color 0.2s;
-}
-.popup-close:hover {
-    background: #233554;
-    color: #ff5370;
-}
-.status-label {
-    padding: 0.3em 0.8em;
-    border-radius: 12px;
-    font-weight: bold;
-    font-size: 0.95em;
-    letter-spacing: 0.5px;
-    display: inline-block;
-}
-.status-cancelled { background: #ff5370; color: #fff; }
-.status-failed    { background: #ffb86c; color: #fff; }
-.status-pending   { background: #ffd700; color: #222; }
-.status-completed { background: #64ffda; color: #0a192f; }
-.status-running   { background: #40c4ff; color: #fff; }
-.delete-btn {
-    background: #ff5370 !important;
-    color: #fff !important;
-    border: none;
-    border-radius: 4px;
-    padding: 0.4em 1em;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background 0.2s, color 0.2s;
-}
-.delete-btn:hover {
-    background: #d32f2f !important;
-    color: #fff !important;
-}
-.delete-btn-disabled {
-    background: #b0b7be !important;
-    color: #fff !important;
-    cursor: not-allowed !important;
-    opacity: 0.7;
-}
+    :root {
+        --text-muted: #4a5568;
+        --text-secondary: #8892b0;
+        --bg-elevated: #162d47;
+        --accent: #64ffda;
+        --accent-dim: rgba(100,255,218,0.08);
+        --error: #ff5370;
+        --border: #1e3a5a;
+    }
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35em;
+        padding: 0.28em 0.75em;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        letter-spacing: 0.3px;
+        white-space: nowrap;
+    }
+    .status-badge::before {
+        content: '';
+        display: inline-block;
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: currentColor;
+    }
+    .status-pending   { background: rgba(255,215,0,0.12);   color: #ffd700; }
+    .status-running   { background: rgba(64,196,255,0.12);  color: #40c4ff; }
+    .status-completed { background: rgba(100,255,218,0.12); color: #64ffda; }
+    .status-cancelled { background: rgba(255,83,112,0.12);  color: #ff5370; }
+    .status-failed    { background: rgba(255,184,108,0.12); color: #ffb86c; }
+
+    .action-btns { display: flex; gap: 0.4em; align-items: center; justify-content: center; }
+    .action-btns a, .action-btns button {
+        font-size: 0.75rem;
+        font-weight: 600;
+        padding: 0.32em 0.75em;
+        border-radius: 6px;
+        border: 1px solid transparent;
+        cursor: pointer;
+        text-decoration: none;
+        font-family: inherit;
+        transition: background 0.15s, color 0.15s, border-color 0.15s;
+    }
+    .edit-btn { background: rgba(100,255,218,0.08); color: #64ffda; border-color: rgba(100,255,218,0.2); }
+    .edit-btn:hover { background: #64ffda; color: #050d1a; }
+    .delete-btn { background: rgba(255,83,112,0.08); color: #ff5370; border-color: rgba(255,83,112,0.2); }
+    .delete-btn:hover { background: #ff5370; color: #fff; }
+    .delete-btn-disabled { background: transparent; color: #4a5568; border-color: #1e3a5a; cursor: not-allowed; opacity: 0.5; }
+    .empty-state { text-align: center; padding: 3rem 1rem; color: #8892b0; }
+    .empty-state svg { display: block; margin: 0 auto 0.75rem; color: #4a5568; }
 </style>
 <script>
-let deleteTaskId = null;
-function confirmDelete(taskId) {
-    deleteTaskId = taskId;
-    document.getElementById('delete-modal').style.display = 'flex';
-    document.getElementById('delete-confirm-btn').onclick = ajaxDeleteTask;
-}
-function closeDeleteModal() {
-    document.getElementById('delete-modal').style.display = 'none';
-    deleteTaskId = null;
-}
-function ajaxDeleteTask() {
-    if (!deleteTaskId) return;
-    fetch("{% url 'delete_task' 0 %}".replace('0', deleteTaskId), {
-        method: "POST",
-        headers: {
-            "X-CSRFToken": getCookie('csrftoken'),
-            "Accept": "application/json"
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            // Remove the row from the table
-            const row = document.getElementById('task-row-' + deleteTaskId);
-            if (row) row.remove();
-            closeDeleteModal();
-        } else {
-            alert(data.error || "Failed to delete task.");
-            closeDeleteModal();
+    var _deleteTaskId = null;
+    function openDeleteModal(taskId) {
+        _deleteTaskId = taskId;
+        var modal = document.getElementById('delete-modal');
+        modal.style.display = 'flex';
+    }
+    function closeDeleteModal() {
+        document.getElementById('delete-modal').style.display = 'none';
+        _deleteTaskId = null;
+    }
+    document.getElementById('delete-confirm-btn').addEventListener('click', function() {
+        if (_deleteTaskId) {
+            var form = document.createElement('form');
+            form.method = 'post';
+            form.action = '/tasks/' + _deleteTaskId + '/delete/';
+            var csrf = document.createElement('input');
+            csrf.type = 'hidden';
+            csrf.name = 'csrfmiddlewaretoken';
+            csrf.value = document.cookie.match(/csrftoken=([^;]+)/)?.[1] || '';
+            form.appendChild(csrf);
+            document.body.appendChild(form);
+            form.submit();
         }
     });
-}
-function showCancelPopup(taskId) {
-    document.getElementById('cancel-popup-' + taskId).style.display = 'flex';
-}
-function hideCancelPopup(taskId) {
-    document.getElementById('cancel-popup-' + taskId).style.display = 'none';
-}
-function ajaxCancelTask(taskId) {
-    fetch("{% url 'ajax_cancel_task' 0 %}".replace('0', taskId), {
-        method: "POST",
-        headers: {
-            "X-CSRFToken": getCookie('csrftoken'),
-            "Accept": "application/json"
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            // Update status cell
-            const row = document.getElementById('data-row-' + taskId);
-            if (row) {
-                const statusCell = row.querySelector('.status-label');
-                statusCell.textContent = "Cancelled";
-                statusCell.className = "status-label status-cancelled";
-                // Optionally disable the cancel button
-                const cancelBtn = row.querySelector('.cancel-btn');
-                if (cancelBtn) cancelBtn.disabled = true;
-            }
-            hideCancelPopup(taskId);
-        } else {
-            alert(data.error || "Failed to cancel task.");
-        }
-    });
-}
-function getCookie(name) {
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== '') {
-        const cookies = document.cookie.split(';');
-        for (let i = 0; i < cookies.length; i++) {
-            const cookie = cookies[i].trim();
-            if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                break;
-            }
-        }
-    }
-    return cookieValue;
-}
-document.addEventListener('keydown', function(e) {
-    if (e.key === "Escape") {
-        document.querySelectorAll('.cancel-popup').forEach(function(popup) {
-            popup.style.display = 'none';
-        });
-    }
-});
 </script>

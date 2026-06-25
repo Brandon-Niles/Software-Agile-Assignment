@@ -1,341 +1,574 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Task List</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Management System</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body { background: #0a192f; color: #ccd6f6; font-family: 'Segoe UI', Arial, sans-serif; }
-        table { width: 95%; margin: 2em auto; border-collapse: collapse; background: #112240; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 8px rgba(10,25,47,0.3);}
-        th, td { padding: 0.7em 1em; border-bottom: 1px solid #233554; text-align: left; }
-        th { background: #0a192f; color: #64ffda; font-weight: 600; letter-spacing: 1px; }
-        tr:nth-child(even) { background: #0a192f; }
-        tr:hover { background: #233554; }
-        .role-box {
-            background: #233554;
-            color: #64ffda;
-            padding: 0.5em 1em;
-            border-radius: 6px;
-            margin-bottom: 1em;
-            display: inline-block;
-            font-weight: bold;
+        :root {
+            --bg-deep: #050d1a;
+            --bg-base: #0a192f;
+            --bg-card: #0f2235;
+            --bg-elevated: #162d47;
+            --border: #1e3a5a;
+            --border-light: #243e5e;
+            --accent: #64ffda;
+            --accent-dim: rgba(100,255,218,0.08);
+            --accent-glow: rgba(100,255,218,0.2);
+            --text-primary: #e6f1ff;
+            --text-secondary: #8892b0;
+            --text-muted: #4a5568;
+            --error: #ff5370;
+            --warning: #ffb86c;
+            --success: #64ffda;
+            --info: #40c4ff;
+            --pending-bg: rgba(255,215,0,0.15);
+            --pending-color: #ffd700;
+            --running-bg: rgba(64,196,255,0.15);
+            --running-color: #40c4ff;
+            --completed-bg: rgba(100,255,218,0.15);
+            --completed-color: #64ffda;
+            --cancelled-bg: rgba(255,83,112,0.15);
+            --cancelled-color: #ff5370;
+            --failed-bg: rgba(255,184,108,0.15);
+            --failed-color: #ffb86c;
         }
-        button { background: #64ffda; color: #0a192f; border: none; padding: 0.7em 1.4em; border-radius: 5px; cursor: pointer; }
-        button:disabled { background: #233554; color: #666; cursor: not-allowed; }
-        .action-btns { display: flex; gap: 0.5em; }
-        .edit-form input, .edit-form select {
-            background: #0a192f;
-            color: #ccd6f6;
-            border: 1px solid #233554;
-            border-radius: 4px;
-            padding: 0.3em 0.6em;
-            margin-bottom: 0.2em;
-            width: 90%;
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background: var(--bg-deep);
+            color: var(--text-primary);
+            font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+            min-height: 100vh;
+            line-height: 1.5;
         }
-        .edit-form { display: flex; flex-direction: column; gap: 0.2em; }
+
+        /* ── Navbar ── */
+        .navbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 2rem;
+            height: 62px;
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+        }
+        .navbar-brand {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--accent);
+            letter-spacing: 0.5px;
+        }
+        .navbar-brand svg { flex-shrink: 0; }
+        .navbar-right {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .role-badge {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            background: var(--accent-dim);
+            border: 1px solid rgba(100,255,218,0.25);
+            color: var(--accent);
+            padding: 0.35em 0.9em;
+            border-radius: 20px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+        .logout-btn {
+            background: transparent;
+            border: 1px solid var(--error);
+            color: var(--error);
+            padding: 0.4em 1.1em;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s, color 0.2s;
+            letter-spacing: 0.3px;
+        }
+        .logout-btn:hover { background: var(--error); color: #fff; }
+
+        /* ── Page content ── */
+        .page-content { padding: 2rem 2.5rem; max-width: 1400px; margin: 0 auto; }
+        .page-header { margin-bottom: 1.75rem; }
+        .page-header h1 {
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+        .page-header p { color: var(--text-secondary); font-size: 0.9rem; }
+
+        /* ── Stat cards ── */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.75rem;
+        }
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 1.1rem 1.25rem;
+            transition: border-color 0.2s, transform 0.15s;
+        }
+        .stat-card:hover { border-color: var(--border-light); transform: translateY(-1px); }
+        .stat-card .stat-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            margin-bottom: 0.5rem;
+        }
+        .stat-card .stat-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            line-height: 1;
+        }
+        .stat-total   .stat-value { color: var(--text-primary); }
+        .stat-pending  .stat-value { color: var(--pending-color); }
+        .stat-running  .stat-value { color: var(--running-color); }
+        .stat-completed .stat-value { color: var(--completed-color); }
+        .stat-cancelled .stat-value { color: var(--cancelled-color); }
+
+        /* ── Toolbar (search + add) ── */
+        .toolbar {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+        }
+        .search-wrap {
+            position: relative;
+            flex: 1;
+            min-width: 220px;
+            max-width: 420px;
+        }
+        .search-wrap svg {
+            position: absolute;
+            left: 0.85rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+            pointer-events: none;
+        }
+        .search-input {
+            width: 100%;
+            padding: 0.6em 1em 0.6em 2.4em;
+            background: var(--bg-card);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-family: inherit;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            outline: none;
+        }
+        .search-input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+        .search-input::placeholder { color: var(--text-muted); }
+        .search-btn {
+            padding: 0.6em 1.2em;
+            background: var(--accent);
+            color: var(--bg-deep);
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.88rem;
+            cursor: pointer;
+            transition: opacity 0.2s, transform 0.15s;
+            font-family: inherit;
+        }
+        .search-btn:hover { opacity: 0.88; transform: translateY(-1px); }
+        .add-task-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.6em 1.2em;
+            background: var(--accent);
+            color: var(--bg-deep);
+            border: none;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 0.88rem;
+            cursor: pointer;
+            transition: opacity 0.2s, transform 0.15s;
+            font-family: inherit;
+            white-space: nowrap;
+        }
+        .add-task-btn:hover { opacity: 0.88; transform: translateY(-1px); }
+        .clear-filters-link {
+            color: var(--text-secondary);
+            font-size: 0.82rem;
+            text-decoration: none;
+            border: 1px solid var(--border);
+            padding: 0.5em 0.9em;
+            border-radius: 8px;
+            transition: color 0.2s, border-color 0.2s;
+        }
+        .clear-filters-link:hover { color: var(--accent); border-color: var(--accent); }
+
+        /* ── Table ── */
+        .table-wrap {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        thead { background: var(--bg-deep); }
+        th {
+            padding: 0.8em 1em;
+            color: var(--text-secondary);
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+            position: relative;
+            white-space: nowrap;
+        }
+        td {
+            padding: 0.75em 1em;
+            font-size: 0.875rem;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-primary);
+        }
+        tbody tr { transition: background 0.15s; }
+        tbody tr:hover { background: var(--bg-elevated); }
+        tbody tr:last-child td { border-bottom: none; }
+
+        /* ── Dropdown filter ── */
         .dropdown-arrow {
             cursor: pointer;
-            margin-left: 4px;
-            font-size: 0.9em;
+            margin-left: 5px;
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            transition: color 0.15s;
             vertical-align: middle;
         }
+        th:hover .dropdown-arrow { color: var(--accent); }
         .dropdown-filter {
             display: none;
             position: absolute;
-            background: #112240;
-            padding: 8px 0;
-            border-radius: 6px;
-            box-shadow: 0 2px 8px rgba(10,25,47,0.3);
-            z-index: 10;
-            min-width: 120px;
-            max-height: 200px;
+            top: 100%;
+            left: 0;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-light);
+            border-radius: 8px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+            z-index: 200;
+            min-width: 150px;
+            max-height: 220px;
             overflow-y: auto;
-        }
-        th {
-            position: relative;
+            padding: 4px 0;
         }
         .dropdown-option {
-            padding: 6px 16px;
-            color: #ccd6f6;
+            padding: 7px 14px;
+            color: var(--text-primary);
+            font-size: 0.83rem;
             cursor: pointer;
-            white-space: nowrap;
-            transition: background 0.15s;
+            transition: background 0.12s, color 0.12s;
         }
-        .dropdown-option:hover {
-            background: #233554;
-            color: #64ffda;
-        }
-        .actions-header {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 0.3em;
-        }
-        .add-btn {
-            background: #64ffda;
-            color: #0a192f;
-            font-weight: bold;
-            border: none;
-            border-radius: 6px;
-            padding: 0.5em 1.2em;
-            margin-bottom: 0.2em;
-            box-shadow: none;
-            transition: background 0.2s, color 0.2s;
-        }
-        .add-btn:hover {
-            background: #233554;
-            color: #64ffda;
-        }
-        .action-btns {
-            display: flex;
-            gap: 0.5em;
-            justify-content: center;
-            /* Remove or lighten the background for a subtler look */
-            background: transparent; /* or use: background: #112240; for a very light shade */
-            border-radius: 6px;
-            padding: 0.4em 0.7em;
-            box-shadow: none; /* Remove shadow for less emphasis */
-        }
+        .dropdown-option:hover { background: var(--accent-dim); color: var(--accent); }
+
+        /* ── Action buttons ── */
+        .action-btns { display: flex; gap: 0.4em; align-items: center; }
         .action-btns a, .action-btns button {
-            background: #64ffda;
-            color: #0a192f;
-            border: none;
-            border-radius: 4px;
-            padding: 0.4em 1em;
+            font-size: 0.78rem;
             font-weight: 600;
+            padding: 0.35em 0.85em;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
             text-decoration: none;
+            font-family: inherit;
             transition: background 0.2s, color 0.2s;
-            box-shadow: 0 1px 4px rgba(100,255,218,0.10);
         }
-        .action-btns a:hover, .action-btns button:hover {
-            background: #233554;
-            color: #64ffda;
+        .edit-btn { background: var(--accent-dim); color: var(--accent); border: 1px solid rgba(100,255,218,0.2); }
+        .edit-btn:hover { background: var(--accent); color: var(--bg-deep); }
+        .delete-btn { background: rgba(255,83,112,0.1); color: var(--error); border: 1px solid rgba(255,83,112,0.2); }
+        .delete-btn:hover { background: var(--error); color: #fff; }
+        .delete-btn-disabled { background: transparent; color: var(--text-muted); border: 1px solid var(--border); cursor: not-allowed; opacity: 0.5; }
+
+        /* ── Pagination ── */
+        .pagination-bar {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 1.25rem 0 0.5rem;
         }
+        .page-link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 34px;
+            height: 34px;
+            padding: 0 0.6em;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            text-decoration: none;
+            transition: background 0.15s, color 0.15s, border-color 0.15s;
+        }
+        .page-link:hover, .page-link.active { background: var(--accent); color: var(--bg-deep); border-color: var(--accent); }
+        .page-info { color: var(--text-secondary); font-size: 0.85rem; }
+
+        /* ── Empty state ── */
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: var(--text-secondary);
+        }
+        .empty-state svg { margin-bottom: 1rem; color: var(--text-muted); }
+        .empty-state p { font-size: 0.9rem; }
     </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="navbar-brand">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+                <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+            </svg>
+            Task Management
+        </div>
+        <div class="navbar-right">
+            <span class="role-badge">
+                &#9679;&nbsp;
+                {% if selected_role %}{{ selected_role|title }}{% else %}Client{% endif %}
+            </span>
+            {% if user.is_authenticated %}
+                <span style="color:var(--text-secondary);font-size:0.85rem;">{{ user.username }}</span>
+                <form action="{% url 'logout' %}" method="post" style="display:inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="logout-btn">Logout</button>
+                </form>
+            {% endif %}
+        </div>
+    </nav>
+
+    <div class="page-content">
+        <!-- Page header -->
+        <div class="page-header">
+            <h1>Tasks</h1>
+            <p>Manage and monitor all system tasks</p>
+        </div>
+
+        <!-- Stats grid -->
+        <div class="stats-grid">
+            <div class="stat-card stat-total">
+                <div class="stat-label">Total Tasks</div>
+                <div class="stat-value">{{ total_count }}</div>
+            </div>
+            <div class="stat-card stat-pending">
+                <div class="stat-label">Pending</div>
+                <div class="stat-value">{{ pending_count }}</div>
+            </div>
+            <div class="stat-card stat-running">
+                <div class="stat-label">Running</div>
+                <div class="stat-value">{{ running_count }}</div>
+            </div>
+            <div class="stat-card stat-completed">
+                <div class="stat-label">Completed</div>
+                <div class="stat-value">{{ completed_count }}</div>
+            </div>
+            <div class="stat-card stat-cancelled">
+                <div class="stat-label">Cancelled</div>
+                <div class="stat-value">{{ cancelled_count }}</div>
+            </div>
+        </div>
+
+        <!-- Toolbar -->
+        <form method="get" action="{% url 'task_list' %}" id="search-form">
+            <div class="toolbar">
+                <div class="search-wrap">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                    </svg>
+                    <input class="search-input" type="text" name="search" id="search-input"
+                        value="{{ search|default:'' }}"
+                        placeholder="Search tasks..." autocomplete="off">
+                </div>
+                <button type="submit" class="search-btn">Search</button>
+                {% if search or request.GET.title or request.GET.platform or request.GET.location or request.GET.status or request.GET.start_time or request.GET.end_time or request.GET.retries %}
+                    <a href="{% url 'task_list' %}" class="clear-filters-link">&#x2715; Clear filters</a>
+                {% endif %}
+                <div style="flex:1"></div>
+                {% if selected_role == 'admin' %}
+                    <button type="button" class="add-task-btn" onclick="window.location.href='{% url 'add_task' %}'">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                        Add Task
+                    </button>
+                {% endif %}
+            </div>
+        </form>
+
+        <!-- Table -->
+        <div class="table-wrap">
+            <form method="get" id="filter-form">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width:48px">#</th>
+                            <th>
+                                Title
+                                <span class="dropdown-arrow" onclick="toggleDropdown(event,'title-dropdown')">&#9660;</span>
+                                <div class="dropdown-filter" id="title-dropdown">
+                                    {% for value in titles %}
+                                        <div class="dropdown-option" onclick="selectFilter('title','{{ value }}')">{{ value }}</div>
+                                    {% endfor %}
+                                </div>
+                            </th>
+                            <th>
+                                Platform
+                                <span class="dropdown-arrow" onclick="toggleDropdown(event,'platform-dropdown')">&#9660;</span>
+                                <div class="dropdown-filter" id="platform-dropdown">
+                                    {% for value in platforms %}
+                                        <div class="dropdown-option" onclick="selectFilter('platform','{{ value }}')">{{ value }}</div>
+                                    {% endfor %}
+                                </div>
+                            </th>
+                            <th>
+                                Location
+                                <span class="dropdown-arrow" onclick="toggleDropdown(event,'location-dropdown')">&#9660;</span>
+                                <div class="dropdown-filter" id="location-dropdown">
+                                    {% for value in locations %}
+                                        <div class="dropdown-option" onclick="selectFilter('location','{{ value }}')">{{ value }}</div>
+                                    {% endfor %}
+                                </div>
+                            </th>
+                            <th>
+                                Status
+                                <span class="dropdown-arrow" onclick="toggleDropdown(event,'status-dropdown')">&#9660;</span>
+                                <div class="dropdown-filter" id="status-dropdown">
+                                    {% for value in statuses %}
+                                        <div class="dropdown-option" onclick="selectFilter('status','{{ value }}')">{{ value }}</div>
+                                    {% endfor %}
+                                </div>
+                            </th>
+                            <th>
+                                Start Time
+                                <span class="dropdown-arrow" onclick="toggleDropdown(event,'starttime-dropdown')">&#9660;</span>
+                                <div class="dropdown-filter" id="starttime-dropdown">
+                                    {% for value in start_times %}
+                                        <div class="dropdown-option" onclick="selectFilter('start_time','{{ value }}')">{{ value }}</div>
+                                    {% endfor %}
+                                </div>
+                            </th>
+                            <th>
+                                End Time
+                                <span class="dropdown-arrow" onclick="toggleDropdown(event,'endtime-dropdown')">&#9660;</span>
+                                <div class="dropdown-filter" id="endtime-dropdown">
+                                    {% for value in end_times %}
+                                        <div class="dropdown-option" onclick="selectFilter('end_time','{{ value }}')">{{ value }}</div>
+                                    {% endfor %}
+                                </div>
+                            </th>
+                            <th>
+                                Retries
+                                <span class="dropdown-arrow" onclick="toggleDropdown(event,'retries-dropdown')">&#9660;</span>
+                                <div class="dropdown-filter" id="retries-dropdown">
+                                    {% for value in retries %}
+                                        <div class="dropdown-option" onclick="selectFilter('retries','{{ value }}')">{{ value }}</div>
+                                    {% endfor %}
+                                </div>
+                            </th>
+                            <th style="text-align:center">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="task-table-body">
+                        {% include 'main/task_table_rows.html' with selected_role=selected_role %}
+                    </tbody>
+                </table>
+                <!-- Hidden filter inputs -->
+                <input type="hidden" name="title"      id="filter-title"      value="{{ request.GET.title|default_if_none:'' }}">
+                <input type="hidden" name="platform"   id="filter-platform"   value="{{ request.GET.platform|default_if_none:'' }}">
+                <input type="hidden" name="location"   id="filter-location"   value="{{ request.GET.location|default_if_none:'' }}">
+                <input type="hidden" name="status"     id="filter-status"     value="{{ request.GET.status|default_if_none:'' }}">
+                <input type="hidden" name="start_time" id="filter-start_time" value="{{ request.GET.start_time|default_if_none:'' }}">
+                <input type="hidden" name="end_time"   id="filter-end_time"   value="{{ request.GET.end_time|default_if_none:'' }}">
+                <input type="hidden" name="retries"    id="filter-retries"    value="{{ request.GET.retries|default_if_none:'' }}">
+            </form>
+        </div>
+
+        <!-- Pagination -->
+        <div class="pagination-bar">
+            {% if page_obj.has_previous %}
+                <a class="page-link" href="?search={{ search }}&page={{ page_obj.previous_page_number }}">&laquo; Prev</a>
+            {% endif %}
+            <span class="page-info">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+            {% if page_obj.has_next %}
+                <a class="page-link" href="?search={{ search }}&page={{ page_obj.next_page_number }}">Next &raquo;</a>
+            {% endif %}
+        </div>
+    </div><!-- /page-content -->
+
     <script>
-        function showEditForm(rowId) {
-            document.querySelectorAll('.edit-form-row').forEach(r => r.style.display = 'none');
-            document.querySelectorAll('.data-row').forEach(r => r.style.display = '');
-            document.getElementById('edit-form-row-' + rowId).style.display = '';
-            document.getElementById('data-row-' + rowId).style.display = 'none';
-        }
-        function hideEditForm(rowId) {
-            document.getElementById('edit-form-row-' + rowId).style.display = 'none';
-            document.getElementById('data-row-' + rowId).style.display = '';
-        }
-        function confirmCancel(taskId) {
-            if (confirm('Are you sure you want to cancel this task?')) {
-                // You would submit a form or send an AJAX request here
-                alert('Task ' + taskId + ' cancelled (demo only)');
-            }
-        }
-        function toggleDropdown(id) {
-            // Hide all dropdowns first
+        // Dropdown filter toggle
+        function toggleDropdown(event, id) {
+            event.stopPropagation();
             document.querySelectorAll('.dropdown-filter').forEach(function(el) {
                 if (el.id !== id) el.style.display = 'none';
             });
-            // Toggle the clicked one
             var el = document.getElementById(id);
-            if (el.style.display === 'block') {
-                el.style.display = 'none';
-            } else {
-                el.style.display = 'block';
-            }
+            el.style.display = el.style.display === 'block' ? 'none' : 'block';
         }
-        // Hide dropdowns when clicking outside
-        document.addEventListener('click', function(event) {
-            if (!event.target.classList.contains('dropdown-arrow')) {
-                document.querySelectorAll('.dropdown-filter').forEach(function(el) {
-                    el.style.display = 'none';
-                });
-            }
+        document.addEventListener('click', function() {
+            document.querySelectorAll('.dropdown-filter').forEach(function(el) {
+                el.style.display = 'none';
+            });
         });
-
         function selectFilter(field, value) {
             document.getElementById('filter-' + field).value = value;
             document.getElementById('filter-form').submit();
         }
-    </script>
-</head>
-<body>
-    <!-- Role Box Top Left (moved and styled) -->
-    <div style="position: absolute; top: 18px; left: 32px; z-index: 10;">
-        <span class="role-box" style="background: #233554; color: #64ffda; font-weight: bold; font-size: 1.1em; padding: 0.6em 1.4em;">
-            Role: 
-            {% if selected_role %}
-                {{ selected_role|title }}
-            {% else %}
-                Client
-            {% endif %}
-        </span>
-    </div>
-    <!-- Logout Button Top Right -->
-    <div style="position: absolute; top: 18px; right: 32px; z-index: 10;">
-        {% if user.is_authenticated %}
-            <form action="{% url 'logout' %}" method="post" style="display:inline;">
-                {% csrf_token %}
-                <button type="submit"
-                        style="
-                            background: #ff5370;
-                            color: #fff;
-                            font-weight: bold;
-                            border: none;
-                            border-radius: 24px;
-                            padding: 0.6em 1.6em;
-                            font-size: 1.05em;
-                            box-shadow: 0 2px 8px rgba(255,83,112,0.15);
-                            cursor: pointer;
-                            transition: background 0.2s, color 0.2s, box-shadow 0.2s;
-                            letter-spacing: 1px;
-                        "
-                        onmouseover="this.style.background='#d32f2f';"
-                        onmouseout="this.style.background='#ff5370';"
-                        title="Logout">
-                    Logout
-                </button>
-            </form>
-        {% endif %}
-    </div>
-    <h1 style="text-align:center; color:#64ffda; margin-top:1.5em; margin-bottom:0.5em; letter-spacing:2px;">
-      Task Management System <span style="font-size:0.6em;color:#a7f3d0;margin-left:0.6em;">(UI test)</span>
-    </h1>
-    <h2>Tasks</h2>
 
-    <!-- Search form -->
-    <form method="get" action="{% url 'task_list' %}" style="text-align:center; margin-bottom:1.5em;">
-        <input
-            type="text"
-            name="search"
-            value="{{ search|default:'' }}"
-            placeholder="Search tasks..."
-            style="padding:0.6em 1em; border-radius:5px; border:1px solid #233554; background:#0a192f; color:#ccd6f6; width:300px;"
-            autofocus
-        >
-        <button type="submit" style="background:#64ffda; color:#0a192f; font-weight:600; border-radius:5px; border:none; padding:0.6em 1.2em; margin-left:0.5em;">Search</button>
-    </form>
-
-    <form method="get" id="filter-form">
-      <table>
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>
-              Title
-              <span class="dropdown-arrow" onclick="toggleDropdown('title-dropdown')">&#9660;</span>
-              <div class="dropdown-filter" id="title-dropdown">
-                {% for value in titles %}
-                  <div class="dropdown-option" onclick="selectFilter('title', '{{ value }}')">{{ value }}</div>
-                {% endfor %}
-              </div>
-            </th>
-            <th>
-              Platform
-              <span class="dropdown-arrow" onclick="toggleDropdown('platform-dropdown')">&#9660;</span>
-              <div class="dropdown-filter" id="platform-dropdown">
-                {% for value in platforms %}
-                  <div class="dropdown-option" onclick="selectFilter('platform', '{{ value }}')">{{ value }}</div>
-                {% endfor %}
-              </div>
-            </th>
-            <th>
-              Location
-              <span class="dropdown-arrow" onclick="toggleDropdown('location-dropdown')">&#9660;</span>
-              <div class="dropdown-filter" id="location-dropdown">
-                {% for value in locations %}
-                  <div class="dropdown-option" onclick="selectFilter('location', '{{ value }}')">{{ value }}</div>
-                {% endfor %}
-              </div>
-            </th>
-            <th>
-              Status
-              <span class="dropdown-arrow" onclick="toggleDropdown('status-dropdown')">&#9660;</span>
-              <div class="dropdown-filter" id="status-dropdown">
-                {% for value in statuses %}
-                  <div class="dropdown-option" onclick="selectFilter('status', '{{ value }}')">{{ value }}</div>
-                {% endfor %}
-              </div>
-            </th>
-            <th>
-              Start Time
-              <span class="dropdown-arrow" onclick="toggleDropdown('starttime-dropdown')">&#9660;</span>
-              <div class="dropdown-filter" id="starttime-dropdown">
-                {% for value in start_times %}
-                  <div class="dropdown-option" onclick="selectFilter('start_time', '{{ value }}')">{{ value }}</div>
-                {% endfor %}
-              </div>
-            </th>
-            <th>
-              End Time
-              <span class="dropdown-arrow" onclick="toggleDropdown('endtime-dropdown')">&#9660;</span>
-              <div class="dropdown-filter" id="endtime-dropdown">
-                {% for value in end_times %}
-                  <div class="dropdown-option" onclick="selectFilter('end_time', '{{ value }}')">{{ value }}</div>
-                {% endfor %}
-              </div>
-            </th>
-            <th>
-              Retries
-              <span class="dropdown-arrow" onclick="toggleDropdown('retries-dropdown')">&#9660;</span>
-              <div class="dropdown-filter" id="retries-dropdown">
-                {% for value in retries %}
-                  <div class="dropdown-option" onclick="selectFilter('retries', '{{ value }}')">{{ value }}</div>
-                {% endfor %}
-              </div>
-            </th>
-            <th>
-              <div class="actions-header">
-                <button type="button" class="add-btn" onclick="window.location.href='{% url 'add_task' %}'">+ Add Task</button>
-                Actions
-              </div>
-            </th>
-          </tr>
-        </thead>
-        <tbody id="task-table-body">
-          {% include 'main/task_table_rows.html' with selected_role=selected_role %}
-        </tbody>
-      </table>
-      <!-- Hidden inputs for filters -->
-      <input type="hidden" name="title" id="filter-title" value="{{ request.GET.title|default_if_none:'' }}">
-      <input type="hidden" name="platform" id="filter-platform" value="{{ request.GET.platform|default_if_none:'' }}">
-      <input type="hidden" name="location" id="filter-location" value="{{ request.GET.location|default_if_none:'' }}">
-      <input type="hidden" name="status" id="filter-status" value="{{ request.GET.status|default_if_none:'' }}">
-      <input type="hidden" name="start_time" id="filter-start_time" value="{{ request.GET.start_time|default_if_none:'' }}">
-      <input type="hidden" name="end_time" id="filter-end_time" value="{{ request.GET.end_time|default_if_none:'' }}">
-      <input type="hidden" name="retries" id="filter-retries" value="{{ request.GET.retries|default_if_none:'' }}">
-    </form>
-
-    <!-- Pagination controls at the bottom -->
-    <div style="text-align:center; margin: 2em 0;">
-        <div class="pagination" style="display:inline-block;">
-            {% if page_obj.has_previous %}
-                <a href="?search={{ search }}&page={{ page_obj.previous_page_number }}" style="color:#64ffda; margin-right:1em;">&laquo; Prev</a>
-            {% endif %}
-            <span style="color:#ccd6f6;">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
-            {% if page_obj.has_next %}
-                <a href="?search={{ search }}&page={{ page_obj.next_page_number }}" style="color:#64ffda; margin-left:1em;">Next &raquo;</a>
-            {% endif %}
-        </div>
-    </div>
-
-    <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const searchInput = document.querySelector('input[name="search"]');
-    const tableBody = document.getElementById('task-table-body');
-    let timeout = null;
-
-    searchInput.addEventListener('input', function() {
-        clearTimeout(timeout);
-        timeout = setTimeout(function() {
-            const params = new URLSearchParams(window.location.search);
-            params.set('search', searchInput.value);
-            fetch(window.location.pathname + '?' + params.toString(), {
-                headers: {'x-requested-with': 'XMLHttpRequest'}
-            })
-            .then(response => response.json())
-            .then(data => {
-                tableBody.innerHTML = data.html;
+        // Live search with debounce
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchInput = document.getElementById('search-input');
+            const tableBody   = document.getElementById('task-table-body');
+            let timeout = null;
+            searchInput.addEventListener('input', function() {
+                clearTimeout(timeout);
+                timeout = setTimeout(function() {
+                    const params = new URLSearchParams(window.location.search);
+                    params.set('search', searchInput.value);
+                    fetch(window.location.pathname + '?' + params.toString(), {
+                        headers: {'x-requested-with': 'XMLHttpRequest'}
+                    })
+                    .then(r => r.json())
+                    .then(data => { tableBody.innerHTML = data.html; });
+                }, 300);
             });
-        }, 300); // 300ms debounce
-    });
-});
-</script>
+        });
+    </script>
 </body>
 </html>
