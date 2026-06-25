@@ -22,6 +22,8 @@ class TaskForm(forms.ModelForm):
     def _parse_time_value(self, value):
         if not value:
             return None
+        if isinstance(value, datetime):
+            return value
         for fmt in ('%Y-%m-%d %H:%M', '%Y-%m-%d'):
             try:
                 return datetime.strptime(value, fmt)
@@ -45,11 +47,8 @@ class TaskForm(forms.ModelForm):
         start_time = cleaned_data.get('start_time')
         end_time = cleaned_data.get('end_time')
         if start_time and end_time:
-            try:
-                parsed_start = self._parse_time_value(start_time)
-                parsed_end = self._parse_time_value(end_time)
-            except forms.ValidationError:
-                return cleaned_data
+            parsed_start = self._parse_time_value(start_time)
+            parsed_end = self._parse_time_value(end_time)
             if parsed_end < parsed_start:
                 self.add_error('end_time', 'End time must be the same or after start time.')
         return cleaned_data

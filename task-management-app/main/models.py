@@ -32,6 +32,8 @@ class Task(models.Model):
     def _parse_time_value(self, value):
         if not value:
             return None
+        if isinstance(value, datetime):
+            return value
         for fmt in ('%Y-%m-%d %H:%M', '%Y-%m-%d'):
             try:
                 return datetime.strptime(value, fmt)
