@@ -365,6 +365,7 @@
                 &#9679;&nbsp;
                 {% if selected_role %}{{ selected_role|title }}{% else %}Client{% endif %}
             </span>
+            <div style="font-size:0.82rem;color:var(--text-muted);margin-left:6px">v{{ app_version|default:'0.0.0' }}</div>
             {% if user.is_authenticated %}
                 <span style="color:var(--text-secondary);font-size:0.85rem;">{{ user.username }}</span>
                 <form action="{% url 'logout' %}" method="post" style="display:inline;">

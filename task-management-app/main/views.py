@@ -17,6 +17,8 @@ from .decorators import admin_required
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponse
 from django.views.decorators.cache import never_cache
+import os
+from pathlib import Path
 
 
 def user_is_admin(user):
@@ -191,6 +193,17 @@ def task_list(request):
         'completed_count': all_tasks.filter(status__iexact='completed').count(),
         'cancelled_count': all_tasks.filter(status__iexact='cancelled').count(),
     }
+
+    # Read application version from VERSION file if present
+    try:
+        base = Path(__file__).resolve().parents[1]
+        version_file = base / 'VERSION'
+        if version_file.exists():
+            context['app_version'] = version_file.read_text().strip()
+        else:
+            context['app_version'] = '0.0.0'
+    except Exception:
+        context['app_version'] = '0.0.0'
 
     if request.headers.get('x-requested-with') == 'XMLHttpRequest':
         html = render_to_string('main/task_table_rows.html', {

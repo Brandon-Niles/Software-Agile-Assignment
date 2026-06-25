@@ -50,6 +50,9 @@ jobs:
       packages: write
     steps:
       - uses: actions/checkout@v4
+      - name: Read version file
+        run: |
+          if [ -f VERSION ]; then echo "VERSION=$(cat VERSION)" >> $GITHUB_ENV; else echo "VERSION=0.0.0" >> $GITHUB_ENV; fi
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
       - name: Set up Docker Buildx
@@ -68,6 +71,7 @@ jobs:
           tags: |
             ghcr.io/${{ github.repository }}/task-app:latest
             ghcr.io/${{ github.repository }}/task-app:dev-${{ github.sha }}
+            ghcr.io/${{ github.repository }}/task-app:${{ env.VERSION }}
 
   deploy-to-dev-environment:
     runs-on: ubuntu-latest
