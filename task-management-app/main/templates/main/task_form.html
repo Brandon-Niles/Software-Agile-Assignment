@@ -285,7 +285,7 @@
                                 }
                             }
                         } else {
-                            alert('Failed to add task');
+                            if(typeof showToast === 'function') showToast('Failed to add task', 'error'); else alert('Failed to add task');
                         }
                     } else {
                         // server returned HTML (form with errors) -> replace form card
@@ -297,7 +297,7 @@
                             if(newCard && oldCard) oldCard.replaceWith(newCard);
                         }catch(e){ location.reload(); }
                     }
-                }).catch(function(){ alert('Network error'); });
+                }).catch(function(err){ if(typeof showToast === 'function') showToast('Network error', 'error'); else alert('Network error'); });
             });
         })();
     </script>
