@@ -25,7 +25,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-r8i7%booyrhr^lswv^wrw_(@w#zh*vh!hxse$t0vcr(_%up998')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = os.environ.get('DEBUG', os.environ.get('DJANGO_DEBUG', '0')).lower() in ('1', 'true', 'yes')
 
 # Allow hosts from env var (space-separated) or fall back to sensible defaults.
 # .onrender.com covers all Render preview/production URLs automatically.
