@@ -642,6 +642,7 @@
                 <input type="hidden" name="retries"    id="filter-retries"    value="{{ request.GET.retries|default_if_none:'' }}">
             </form>
         </div>
+        {% include 'main/partials/delete_task_ui.html' %}
         <!-- Pagination -->
         <div class="pagination-bar">
             {% if page_obj.has_previous %}

@@ -379,17 +379,22 @@ def settings_page(request):
         return HttpResponse(render_to_string('main/partials/settings_fragment.html', context, request=request))
     return render(request, 'main/tabs/settings.html', context)
 
-@admin_required
 @login_required
 def edit_task(request, task_id):
     task = get_object_or_404(Task, id=task_id)
-    # Immediate admin check to avoid executing any edit logic for non-admins
-    if not user_is_admin(request.user):
+    # Allow edits by admins or the task owner
+    can_edit = user_is_admin(request.user) or (hasattr(task, 'owner') and task.owner == request.user)
+    if not can_edit:
+        # If AJAX request, return JSON permission denied so client can show message
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return JsonResponse({'success': False, 'error': 'Permission denied.'}, status=403)
         return redirect('tasks_page')
     error = None
     if request.method == "POST":
         # Final permission check before saving
-        if not user_is_admin(request.user):
+        if not (user_is_admin(request.user) or (hasattr(task, 'owner') and task.owner == request.user)):
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse({'success': False, 'error': 'Permission denied.'}, status=403)
             return redirect('tasks_page')
         form = TaskForm(request.POST, instance=task)
         if form.is_valid():
