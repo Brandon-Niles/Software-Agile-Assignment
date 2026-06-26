@@ -281,7 +281,17 @@
                                 } else {
                                     // row not present (maybe different page) - reload tasks fragment and flash
                                     const panel = document.getElementById('tab-tasks');
-                                    if(panel){ try{ if(typeof window.reloadTab === 'function') window.reloadTab('tasks'); panel.classList.add('panel-flash'); setTimeout(()=>panel.classList.remove('panel-flash'),3000); }catch(e){} }
+                                    if(panel){
+                                        try{
+                                            if(typeof window.reloadTab === 'function') window.reloadTab('tasks');
+                                            panel.classList.add('panel-flash'); setTimeout(()=>panel.classList.remove('panel-flash'),3000);
+                                        }catch(e){}
+                                    } else if(typeof window.reloadTab === 'function'){
+                                        try{ window.reloadTab('tasks'); }catch(e){}
+                                    } else {
+                                        // Not inside the tabbed UI; redirect back to the main tasks page so user sees updated list
+                                        window.location.href = '{% url "task_list" %}';
+                                    }
                                 }
                             }
                         } else {
