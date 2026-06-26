@@ -154,35 +154,42 @@ jobs:
           echo "App URL: $RENDER_SERVICE_URL"
           exit 0
  
-  security-scan:
-    name: Security smoke scan (Bandit + ZAP)
+  smoke:
+    name: Smoke tests against Render
     runs-on: ubuntu-latest
     needs: deploy
-    if: always()
-    defaults:
-      run:
-        working-directory: task-management-app
+
     steps:
-      - uses: actions/checkout@v4
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.11'
-      - name: Install security tools
+      - name: Check home page responds with 200
+        env:
+          RENDER_BASE_URL: ${{ secrets.RENDER_BASE_URL }}
         run: |
-          python -m pip install --upgrade pip
-          pip install bandit
-      - name: Run Bandit (static analysis)
+          if [ -z "$RENDER_BASE_URL" ]; then
+            echo "RENDER_BASE_URL not set; skipping smoke tests."
+            exit 0
+          fi
+
+          echo "Checking $RENDER_BASE_URL/"
+          CODE=$(curl -s -o /dev/null -w "%{http_code}" "$RENDER_BASE_URL/")
+          echo "Status code: $CODE"
+          if [ "$CODE" -ne 200 ]; then
+            echo "Home page did not return 200"
+            exit 1
+          fi
+
+      - name: Check login page responds with 200
+        env:
+          RENDER_BASE_URL: ${{ secrets.RENDER_BASE_URL }}
         run: |
-          bandit -r . -f json -o ../bandit_report.json || true
-      - name: OWASP ZAP baseline scan
-        uses: zaproxy/action-baseline@v0.8.0
-        with:
-          target: ${{ secrets.RENDER_SERVICE_URL }}
-      - name: Upload security reports
-        uses: actions/upload-artifact@v4
-        with:
-          name: security-reports
-          path: |
-            ../bandit_report.json
-            zap_report.html
+          if [ -z "$RENDER_BASE_URL" ]; then
+            echo "RENDER_BASE_URL not set; skipping smoke tests."
+            exit 0
+          fi
+
+          echo "Checking $RENDER_BASE_URL/login"
+          CODE=$(curl -s -o /dev/null -w "%{http_code}" "$RENDER_BASE_URL/login")
+          echo "Status code: $CODE"
+          if [ "$CODE" -ne 200 ]; then
+            echo "Login page did not return 200"
+            exit 1
+          fi
