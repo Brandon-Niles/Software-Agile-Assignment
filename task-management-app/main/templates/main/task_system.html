@@ -740,6 +740,8 @@
                 try{ window.statusChart = statusChart; }catch(e){}
 
                 function fetchStats(){
+                    // Prefer centralized refresh if available
+                    if(typeof window.refreshDashboard === 'function'){ try{ window.refreshDashboard(); return; }catch(e){} }
                     fetch("{% url 'api_stats' %}")
                         .then(r=>r.json())
                         .then(data=>{

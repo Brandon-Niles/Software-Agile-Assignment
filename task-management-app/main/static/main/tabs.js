@@ -225,6 +225,63 @@ function adjustTaskCounts(deltaTotal, deltaByStatus){
     }catch(e){}
 }
 
+// Refresh dashboard by fetching server stats and updating DOM/chart
+function refreshDashboard(){
+    try{
+        fetch('/tasks/api/stats/')
+            .then(r => { if(!r.ok) throw new Error('Network'); return r.json(); })
+            .then(data => {
+                const by = data.by_status || {};
+                // Update DOM counts
+                const totalEl = document.getElementById('stat-total');
+                const pendingEl = document.getElementById('stat-pending');
+                const runningEl = document.getElementById('stat-running');
+                const completedEl = document.getElementById('stat-completed');
+                if(totalEl) totalEl.textContent = data.total || 0;
+                if(pendingEl) pendingEl.textContent = by.Pending || 0;
+                if(runningEl) runningEl.textContent = by.Running || 0;
+                if(completedEl) completedEl.textContent = by.Completed || 0;
+                // Update global chart if available
+                try{
+                    var ch = (window && window.statusChart) ? window.statusChart : null;
+                    if(!ch){
+                        const canvas = document.querySelector('#tab-dashboard canvas');
+                        if(canvas && typeof Chart !== 'undefined'){
+                            try{ ch = Chart.getChart(canvas); }catch(e){ ch = null; }
+                        }
+                    }
+                    if(ch && ch.data && ch.data.datasets && ch.data.datasets[0]){
+                        const values = [by.Pending||0, by.Running||0, by.Completed||0, by.Cancelled||0, by.Failed||0];
+                        ch.data.datasets[0].data = values.slice(0, ch.data.datasets[0].data.length);
+                        if(typeof ch.update === 'function') ch.update();
+                    }
+                }catch(e){}
+            }).catch(()=>{});
+    }catch(e){}
+}
+
+// Debounced refresh scheduler for button clicks
+var __refreshTimeout = null;
+function scheduleRefreshDashboard(delay){
+    delay = typeof delay === 'number' ? delay : 250;
+    try{ if(__refreshTimeout) clearTimeout(__refreshTimeout); __refreshTimeout = setTimeout(refreshDashboard, delay); }catch(e){}
+}
+
+// Listen for clicks that likely change tasks and schedule a dashboard refresh
+document.addEventListener('click', function(e){
+    try{
+        const btn = e.target.closest('button, a');
+        if(!btn) return;
+        // Trigger refresh on add/edit/delete actions or other primary form buttons
+        if(btn.classList.contains('add-task-btn') || btn.classList.contains('delete-btn') || btn.classList.contains('edit-btn') || btn.classList.contains('btn-primary') || btn.closest('.action-btns')){
+            scheduleRefreshDashboard(300);
+        }
+    }catch(err){}
+});
+
+// Periodic refresh as safety net (5s)
+try{ setInterval(refreshDashboard, 5000); }catch(e){}
+
 // Lightweight toast notifications
 ;(function(){
     let container = null;
