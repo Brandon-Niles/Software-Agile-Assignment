@@ -260,6 +260,10 @@ class TaskViewTest(TestCase):
     def test_edit_allowed_for_owner(self):
         # Create a new user and assign as owner of a task
         owner = User.objects.create_user(username='owner', password='ownerpass')
+        # Make owner an admin so the Task model allows assigning as owner
+        owner.is_superuser = True
+        owner.is_staff = True
+        owner.save()
         task = Task.objects.first()
         task.owner = owner
         task.save()
