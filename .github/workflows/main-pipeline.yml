@@ -15,6 +15,26 @@ jobs:
       run:
         working-directory: task-management-app
     steps:
+      - name: Resolve RENDER_BASE_URL
+        env:
+          DEPLOY_APP_URL: ${{ needs.deploy.outputs.app_url }}
+          SECRET_BASE: ${{ secrets.RENDER_BASE_URL }}
+          SERVICE_URL: ${{ secrets.RENDER_SERVICE_URL }}
+        run: |
+          if [ -n "$SECRET_BASE" ]; then
+            echo "Using secret RENDER_BASE_URL"
+            echo "RENDER_BASE_URL=$SECRET_BASE" >> $GITHUB_ENV
+          elif [ -n "$DEPLOY_APP_URL" ]; then
+            echo "Using deploy output app_url"
+            echo "RENDER_BASE_URL=$DEPLOY_APP_URL" >> $GITHUB_ENV
+          elif [ -n "$SERVICE_URL" ]; then
+            echo "Using service URL secret"
+            echo "RENDER_BASE_URL=$SERVICE_URL" >> $GITHUB_ENV
+          else
+            echo "No base URL available"
+            echo "RENDER_BASE_URL=" >> $GITHUB_ENV
+          fi
+
       - uses: actions/checkout@v4
       - name: Set up Python
         uses: actions/setup-python@v4
