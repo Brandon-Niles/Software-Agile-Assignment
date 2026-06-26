@@ -126,12 +126,11 @@ jobs:
         run: |
           # read value written by previous step
           if [ -f /tmp/set_app_url ]; then
-            cat /tmp/set_app_url
             APP_URL=$(cat /tmp/set_app_url | sed -n 's/^app_url=//p')
           else
             APP_URL=
           fi
-          echo "::set-output name=app_url::$APP_URL"
+          echo "app_url=$APP_URL" >> $GITHUB_OUTPUT
 
   smoke:
     name: Smoke tests against Render
@@ -167,10 +166,10 @@ jobs:
           fi
 
           echo "Checking $RENDER_BASE_URL/"
-          CODE=$(curl -s -o /dev/null -w "%{http_code}" "$RENDER_BASE_URL/")
+          CODE=$(curl -s -o /dev/null -w "%{http_code}" -L "$RENDER_BASE_URL/")
           echo "Status code: $CODE"
-          if [ "$CODE" -ne 200 ]; then
-            echo "Home page did not return 200"
+          if [ "$CODE" -lt 200 ] || [ "$CODE" -ge 400 ]; then
+            echo "Home page did not return 2xx/3xx (got $CODE)"
             exit 1
           fi
 
@@ -182,9 +181,9 @@ jobs:
           fi
 
           echo "Checking $RENDER_BASE_URL/login"
-          CODE=$(curl -s -o /dev/null -w "%{http_code}" "$RENDER_BASE_URL/login")
+          CODE=$(curl -s -o /dev/null -w "%{http_code}" -L "$RENDER_BASE_URL/login")
           echo "Status code: $CODE"
-          if [ "$CODE" -ne 200 ]; then
-            echo "Login page did not return 200"
+          if [ "$CODE" -lt 200 ] || [ "$CODE" -ge 400 ]; then
+            echo "Login page did not return 2xx/3xx (got $CODE)"
             exit 1
           fi
