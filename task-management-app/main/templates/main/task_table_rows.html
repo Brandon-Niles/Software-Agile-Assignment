@@ -13,7 +13,11 @@
         <td style="text-align:center;">{{ task.retries }}</td>
         <td>
             <div class="action-btns">
-                <a href="{% url 'edit_task' task.id %}" class="edit-btn">Edit</a>
+                {% if selected_role == 'admin' or task.owner == user %}
+                    <a href="{% url 'edit_task' task.id %}" class="edit-btn">Edit</a>
+                {% else %}
+                    <button type="button" class="edit-btn-disabled" disabled>Read Only</button>
+                {% endif %}
                 {% if selected_role == 'admin' %}
                     <button type="button" class="delete-btn" onclick="openDeleteModal({{ task.id }})">Delete</button>
                 {% else %}
@@ -102,6 +106,7 @@
     }
     .edit-btn { background: rgba(100,255,218,0.08); color: #64ffda; border-color: rgba(100,255,218,0.2); }
     .edit-btn:hover { background: #64ffda; color: #050d1a; }
+    .edit-btn-disabled { background: transparent; color: #4a5568; border-color: #1e3a5a; cursor: not-allowed; opacity: 0.5; }
     .delete-btn { background: rgba(255,83,112,0.08); color: #ff5370; border-color: rgba(255,83,112,0.2); }
     .delete-btn:hover { background: #ff5370; color: #fff; }
     .delete-btn-disabled { background: transparent; color: #4a5568; border-color: #1e3a5a; cursor: not-allowed; opacity: 0.5; }
