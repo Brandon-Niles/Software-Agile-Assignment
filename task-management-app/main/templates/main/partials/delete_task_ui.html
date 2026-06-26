@@ -1,0 +1,104 @@
+<!-- Delete confirmation modal -->
+<div id="delete-modal" style="display:none;position:fixed;inset:0;z-index:999;background:rgba(5,13,26,0.85);align-items:center;justify-content:center;">
+    <div style="background:#0f2235;border:1px solid #1e3a5a;padding:2rem 2.5rem;border-radius:12px;box-shadow:0 16px 48px rgba(0,0,0,0.5);text-align:center;min-width:280px;max-width:360px;">
+        <div style="width:48px;height:48px;border-radius:50%;background:rgba(255,83,112,0.12);display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ff5370" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+        </div>
+        <h3 style="color:#e6f1ff;font-size:1.05rem;margin-bottom:0.5rem;">Delete Task?</h3>
+        <p style="color:#8892b0;font-size:0.88rem;margin-bottom:1.5rem;">This action cannot be undone.</p>
+        <div style="display:flex;gap:0.75rem;justify-content:center;">
+            <button id="delete-confirm-btn"
+                style="background:#ff5370;color:#fff;border:none;border-radius:7px;padding:0.55em 1.4em;font-weight:600;font-size:0.88rem;cursor:pointer;transition:background 0.2s;">
+                Yes, Delete
+            </button>
+            <button onclick="closeDeleteModal()"
+                style="background:transparent;color:#8892b0;border:1px solid #1e3a5a;border-radius:7px;padding:0.55em 1.4em;font-weight:500;font-size:0.88rem;cursor:pointer;transition:background 0.2s,color 0.2s;">
+                Cancel
+            </button>
+        </div>
+    </div>
+</div>
+
+<style>
+    .row-flash { animation: rowFlash 3s ease forwards; }
+    @keyframes rowFlash { 0% { background: rgba(16,185,129,0.18); } 60% { background: transparent; } 100% { background: transparent; } }
+    .panel-flash { box-shadow: 0 0 0 4px rgba(16,185,129,0.12) inset; transition: box-shadow 0.3s; }
+</style>
+
+<script>
+    var _deleteTaskId = null;
+    function openDeleteModal(taskId) {
+        _deleteTaskId = taskId;
+        var modal = document.getElementById('delete-modal');
+        if (modal) {
+            modal.style.display = 'flex';
+        }
+    }
+    function closeDeleteModal() {
+        var modal = document.getElementById('delete-modal');
+        if (modal) {
+            modal.style.display = 'none';
+        }
+        _deleteTaskId = null;
+    }
+
+    (function(){
+        var confirmBtn = document.getElementById('delete-confirm-btn');
+        if (!confirmBtn || confirmBtn.dataset.bound === '1') return;
+        confirmBtn.dataset.bound = '1';
+        confirmBtn.addEventListener('click', function() {
+            if (!_deleteTaskId) return;
+            const csrf = document.cookie.match(/csrftoken=([^;]+)/)?.[1] || '';
+            fetch('/delete/' + _deleteTaskId + '/', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrf,
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'same-origin'
+            }).then(function(r){
+                if(!r.ok){ return r.text().then(function(t){ throw new Error('HTTP ' + r.status + ': ' + t); }); }
+                return r.json();
+            }).then(function(data){
+                if(data && data.success){
+                    var row = document.getElementById('task-row-' + _deleteTaskId);
+                    var statusText = data.status || 'Pending';
+                    if(statusText === 'Pending' && row){
+                        var badge = row.querySelector('.status-badge');
+                        if(badge) statusText = badge.textContent.trim();
+                    }
+                    if(row) {
+                        row.remove();
+                    } else if (typeof window.reloadTab === 'function') {
+                        window.reloadTab('tasks');
+                    }
+                    if (typeof adjustTaskCounts === 'function') {
+                        var delta = {};
+                        delta[statusText] = -1;
+                        adjustTaskCounts(-1, delta);
+                    }
+                    try {
+                        var tasksPanel = document.getElementById('tab-tasks');
+                        if (tasksPanel) {
+                            tasksPanel.classList.add('panel-flash');
+                            setTimeout(function(){ tasksPanel.classList.remove('panel-flash'); }, 3000);
+                        }
+                    } catch (e) {}
+                    try {
+                        if (typeof window.reloadTab === 'function') {
+                            window.reloadTab('dashboard');
+                        }
+                    } catch (e) {}
+                    closeDeleteModal();
+                } else {
+                    if(typeof showToast === 'function') showToast('Delete failed: ' + (data && data.error ? data.error : 'Unknown'), 'error');
+                    else alert('Delete failed: ' + (data && data.error ? data.error : 'Unknown'));
+                }
+            }).catch(function(err){
+                if(typeof showToast === 'function') showToast('Network error: ' + (err && err.message ? err.message : err), 'error');
+                else alert('Network error: ' + (err && err.message ? err.message : err));
+            });
+        });
+    })();
+</script>

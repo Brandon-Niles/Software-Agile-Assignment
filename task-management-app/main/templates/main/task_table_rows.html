@@ -1,61 +1,38 @@
-<tbody>
-    {% for task in tasks %}
-    <tr id="task-row-{{ task.id }}" data-status="{{ task.status }}">
-        <td style="color:var(--text-muted);font-size:0.8rem;">{{ forloop.counter0|add:page_obj.start_index }}</td>
-        <td style="font-weight:500;">{{ task.title }}</td>
-        <td>{{ task.platform }}</td>
-        <td>{{ task.location }}</td>
-        <td>
-            <span class="status-badge status-{{ task.status|lower }}">{{ task.status|capfirst }}</span>
-        </td>
-        <td style="color:var(--text-secondary);font-size:0.83rem;">{{ task.start_time }}</td>
-        <td style="color:var(--text-secondary);font-size:0.83rem;">{{ task.end_time }}</td>
-        <td style="text-align:center;">{{ task.retries }}</td>
-        <td>
-            <div class="action-btns">
-                {% if selected_role == 'admin' or task.owner == user %}
-                    <a href="{% url 'edit_task' task.id %}" class="edit-btn">Edit</a>
-                {% else %}
-                    <button type="button" class="edit-btn-disabled" disabled>Read Only</button>
-                {% endif %}
-                {% if selected_role == 'admin' %}
-                    <button type="button" class="delete-btn" onclick="openDeleteModal({{ task.id }})">Delete</button>
-                {% else %}
-                    <button type="button" class="delete-btn-disabled" disabled>Delete</button>
-                {% endif %}
-            </div>
-        </td>
-    </tr>
-    {% empty %}
-    <tr>
-        <td colspan="9" class="empty-state">
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-            <p>No tasks found.</p>
-        </td>
-    </tr>
-    {% endfor %}
-</tbody>
-
-<!-- Delete confirmation modal -->
-<div id="delete-modal" style="display:none;position:fixed;inset:0;z-index:999;background:rgba(5,13,26,0.85);align-items:center;justify-content:center;">
-    <div style="background:#0f2235;border:1px solid #1e3a5a;padding:2rem 2.5rem;border-radius:12px;box-shadow:0 16px 48px rgba(0,0,0,0.5);text-align:center;min-width:280px;max-width:360px;">
-        <div style="width:48px;height:48px;border-radius:50%;background:rgba(255,83,112,0.12);display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ff5370" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+{% for task in tasks %}
+<tr id="task-row-{{ task.id }}" data-status="{{ task.status }}">
+    <td style="color:var(--text-muted);font-size:0.8rem;">{{ forloop.counter0|add:page_obj.start_index }}</td>
+    <td style="font-weight:500;">{{ task.title }}</td>
+    <td>{{ task.platform }}</td>
+    <td>{{ task.location }}</td>
+    <td>
+        <span class="status-badge status-{{ task.status|lower }}">{{ task.status|capfirst }}</span>
+    </td>
+    <td style="color:var(--text-secondary);font-size:0.83rem;">{{ task.start_time }}</td>
+    <td style="color:var(--text-secondary);font-size:0.83rem;">{{ task.end_time }}</td>
+    <td style="text-align:center;">{{ task.retries }}</td>
+    <td>
+        <div class="action-btns">
+            {% if selected_role == 'admin' or task.owner == user %}
+                <a href="{% url 'edit_task' task.id %}" class="edit-btn">Edit</a>
+            {% else %}
+                <button type="button" class="edit-btn-disabled" disabled>Read Only</button>
+            {% endif %}
+            {% if selected_role == 'admin' %}
+                <button type="button" class="delete-btn" onclick="openDeleteModal({{ task.id }})">Delete</button>
+            {% else %}
+                <button type="button" class="delete-btn-disabled" disabled>Delete</button>
+            {% endif %}
         </div>
-        <h3 style="color:#e6f1ff;font-size:1.05rem;margin-bottom:0.5rem;">Delete Task?</h3>
-        <p style="color:#8892b0;font-size:0.88rem;margin-bottom:1.5rem;">This action cannot be undone.</p>
-        <div style="display:flex;gap:0.75rem;justify-content:center;">
-            <button id="delete-confirm-btn"
-                style="background:#ff5370;color:#fff;border:none;border-radius:7px;padding:0.55em 1.4em;font-weight:600;font-size:0.88rem;cursor:pointer;transition:background 0.2s;">
-                Yes, Delete
-            </button>
-            <button onclick="closeDeleteModal()"
-                style="background:transparent;color:#8892b0;border:1px solid #1e3a5a;border-radius:7px;padding:0.55em 1.4em;font-weight:500;font-size:0.88rem;cursor:pointer;transition:background 0.2s,color 0.2s;">
-                Cancel
-            </button>
-        </div>
-    </div>
-</div>
+    </td>
+</tr>
+{% empty %}
+<tr>
+    <td colspan="9" class="empty-state">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <p>No tasks found.</p>
+    </td>
+</tr>
+{% endfor %}
 
 <style>
     :root {
@@ -113,61 +90,3 @@
     .empty-state { text-align: center; padding: 3rem 1rem; color: #8892b0; }
     .empty-state svg { display: block; margin: 0 auto 0.75rem; color: #4a5568; }
 </style>
-<style>
-    .row-flash { animation: rowFlash 3s ease forwards; }
-    @keyframes rowFlash { 0% { background: rgba(16,185,129,0.18); } 60% { background: transparent; } 100% { background: transparent; } }
-    .panel-flash { box-shadow: 0 0 0 4px rgba(16,185,129,0.12) inset; transition: box-shadow 0.3s; }
-</style>
-<script>
-    var _deleteTaskId = null;
-    function openDeleteModal(taskId) {
-        _deleteTaskId = taskId;
-        var modal = document.getElementById('delete-modal');
-        modal.style.display = 'flex';
-    }
-    function closeDeleteModal() {
-        document.getElementById('delete-modal').style.display = 'none';
-        _deleteTaskId = null;
-    }
-    document.getElementById('delete-confirm-btn').addEventListener('click', function() {
-        if (_deleteTaskId) {
-            const csrf = document.cookie.match(/csrftoken=([^;]+)/)?.[1] || '';
-            // correct delete endpoint is /delete/<id>/ (not /tasks/<id>/delete/)
-            fetch('/delete/' + _deleteTaskId + '/', {
-                method: 'POST',
-                headers: {
-                    'X-CSRFToken': csrf,
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'Content-Type': 'application/json'
-                },
-                credentials: 'same-origin'
-            }).then(r=>{
-                if(!r.ok){ return r.text().then(t=>{ throw new Error('HTTP '+r.status+': '+t); }); }
-                return r.json();
-            }).then(data=>{
-                    if(data && data.success){
-                    // remove the row from table
-                    const row = document.getElementById('task-row-' + _deleteTaskId);
-                    // prefer server-sent status for accuracy
-                    let statusText = (data && data.status) ? data.status : 'Pending';
-                    // fallback to badge text if server didn't return status
-                    if(statusText === 'Pending' && row){ const badge = row.querySelector('.status-badge'); if(badge) statusText = badge.textContent.trim(); }
-                    if(row) row.remove();
-                    // update counts and chart
-                    const delta = {};
-                    delta[statusText] = -1;
-                    adjustTaskCounts(-1, delta);
-                    // flash tasks panel to highlight change
-                    try{
-                        const panel = document.getElementById('tab-tasks');
-                        if(panel){ panel.classList.add('panel-flash'); setTimeout(()=>panel.classList.remove('panel-flash'),3000); }
-                    }catch(e){}
-                    closeDeleteModal();
-                    } else {
-                    if(typeof showToast === 'function') showToast('Delete failed: ' + (data && data.error ? data.error : 'Unknown'), 'error');
-                    else alert('Delete failed: ' + (data && data.error ? data.error : 'Unknown'));
-                }
-            }).catch((err)=>{ if(typeof showToast === 'function') showToast('Network error: ' + (err && err.message ? err.message : err), 'error'); else alert('Network error: ' + (err && err.message ? err.message : err)); });
-        }
-    });
-</script>

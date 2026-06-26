@@ -38,6 +38,8 @@
     </form>
 </div>
 
+{% include 'main/partials/delete_task_ui.html' %}
+
 <div class="pagination-bar">
     {% if page_obj.has_previous %}
         <a class="page-link" href="?search={{ search }}&page={{ page_obj.previous_page_number }}">&laquo; Prev</a>
