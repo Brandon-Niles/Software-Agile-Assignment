@@ -206,6 +206,25 @@ class TaskViewTest(TestCase):
         self.assertTrue(resp.json().get('success'))
         self.assertEqual(Task.objects.count(), total_before-1)
 
+    def test_ajax_delete_updates_api_stats(self):
+        self.client.login(username='admin', password='adminpass')
+        # ensure counts from api_stats reflect deletion
+        stats_before = self.client.get(reverse('api_stats')).json()
+        total_before = stats_before.get('total', 0)
+        by_before = stats_before.get('by_status', {})
+        t = Task.objects.first()
+        status = getattr(t, 'status', None)
+        resp = self.client.post(reverse('delete_task', args=[t.id]), {}, HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+        self.assertEqual(resp.status_code, 200)
+        self.assertTrue(resp.json().get('success'))
+        stats_after = self.client.get(reverse('api_stats')).json()
+        self.assertEqual(stats_after.get('total', 0), max(0, total_before-1))
+        if status:
+            key = status if status in by_before else status.capitalize()
+            # Safely check by_status decrement if the key existed
+            if key in by_before:
+                self.assertEqual(stats_after['by_status'].get(key, 0), max(0, by_before.get(key, 0)-1))
+
     def test_ajax_add_increases_counts(self):
         self.client.login(username='admin', password='adminpass')
         total_before = Task.objects.count()

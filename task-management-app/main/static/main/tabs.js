@@ -202,23 +202,26 @@ function adjustTaskCounts(deltaTotal, deltaByStatus){
         if(pendingEl && deltaByStatus && deltaByStatus.Pending) pendingEl.textContent = Math.max(0, parseInt(pendingEl.textContent||'0',10) + deltaByStatus.Pending);
         if(runningEl && deltaByStatus && deltaByStatus.Running) runningEl.textContent = Math.max(0, parseInt(runningEl.textContent||'0',10) + deltaByStatus.Running);
         if(completedEl && deltaByStatus && deltaByStatus.Completed) completedEl.textContent = Math.max(0, parseInt(completedEl.textContent||'0',10) + deltaByStatus.Completed);
-        // update chart if present
-        const canvas = document.querySelector('#tab-dashboard canvas');
-        if(canvas && typeof Chart !== 'undefined'){
-            try{
-                const ch = Chart.getChart(canvas);
-                if(ch && ch.data && ch.data.datasets && ch.data.datasets[0]){
-                    const map = {Pending:0, Running:1, Completed:2, Cancelled:3};
-                    const ds = ch.data.datasets[0].data;
-                    for(const k in (deltaByStatus||{})){
-                        if(Object.prototype.hasOwnProperty.call(map,k)){
-                            ds[map[k]] = Math.max(0, (ds[map[k]]||0) + deltaByStatus[k]);
-                        }
-                    }
-                    if(typeof ch.update === 'function') ch.update();
+        // update chart if present — prefer global `window.statusChart` if available
+        try{
+            var ch = (window && window.statusChart) ? window.statusChart : null;
+            if(!ch){
+                const canvas = document.querySelector('#tab-dashboard canvas');
+                if(canvas && typeof Chart !== 'undefined'){
+                    try{ ch = Chart.getChart(canvas); }catch(e){ ch = null; }
                 }
-            }catch(e){}
-        }
+            }
+            if(ch && ch.data && ch.data.datasets && ch.data.datasets[0]){
+                const map = {Pending:0, Running:1, Completed:2, Cancelled:3};
+                const ds = ch.data.datasets[0].data;
+                for(const k in (deltaByStatus||{})){
+                    if(Object.prototype.hasOwnProperty.call(map,k)){
+                        ds[map[k]] = Math.max(0, (ds[map[k]]||0) + deltaByStatus[k]);
+                    }
+                }
+                if(typeof ch.update === 'function') ch.update();
+            }
+        }catch(e){}
     }catch(e){}
 }
 
