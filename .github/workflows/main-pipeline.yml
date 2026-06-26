@@ -158,11 +158,11 @@ jobs:
     name: Smoke tests against Render
     runs-on: ubuntu-latest
     needs: deploy
+    env:
+      RENDER_BASE_URL: ${{ needs.deploy.outputs.app_url }}
 
     steps:
       - name: Check home page responds with 200
-        env:
-          RENDER_BASE_URL: ${{ secrets.RENDER_BASE_URL }}
         run: |
           if [ -z "$RENDER_BASE_URL" ]; then
             echo "RENDER_BASE_URL not set; skipping smoke tests."
@@ -178,8 +178,6 @@ jobs:
           fi
 
       - name: Check login page responds with 200
-        env:
-          RENDER_BASE_URL: ${{ secrets.RENDER_BASE_URL }}
         run: |
           if [ -z "$RENDER_BASE_URL" ]; then
             echo "RENDER_BASE_URL not set; skipping smoke tests."
