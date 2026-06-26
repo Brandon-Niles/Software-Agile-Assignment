@@ -736,6 +736,8 @@
                     },
                     options: {plugins:{legend:{position:'bottom'}},maintainAspectRatio:false}
                 });
+                // Expose the chart globally so other scripts (AJAX actions) can update it directly
+                try{ window.statusChart = statusChart; }catch(e){}
 
                 function fetchStats(){
                     fetch("{% url 'api_stats' %}")
