@@ -222,3 +222,58 @@ class TaskViewTest(TestCase):
         self.assertEqual(resp.status_code, 200)
         self.assertTrue(resp.json().get('success'))
         self.assertEqual(Task.objects.count(), total_before+1)
+
+    def test_ajax_edit_updates_status_and_counts(self):
+        self.client.login(username='admin', password='adminpass')
+        # ensure there is at least one pending and one running count baseline
+        pending_before = Task.objects.filter(status__iexact='pending').count()
+        running_before = Task.objects.filter(status__iexact='running').count()
+        t = Task.objects.filter(status__iexact='pending').first()
+        self.assertIsNotNone(t)
+        resp = self.client.post(reverse('edit_task', args=[t.id]), {
+            'title': t.title,
+            'platform': t.platform,
+            'location': t.location,
+            'status': 'Running',
+            'start_time': t.start_time,
+            'end_time': t.end_time,
+            'retries': t.retries
+        }, HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+        # AJAX edit returns JSON OK
+        self.assertEqual(resp.status_code, 200)
+        self.assertTrue(resp.json().get('success'))
+        t.refresh_from_db()
+        self.assertEqual(t.status.lower(), 'running')
+        self.assertEqual(Task.objects.filter(status__iexact='pending').count(), max(0, pending_before-1))
+        self.assertEqual(Task.objects.filter(status__iexact='running').count(), running_before+1)
+
+    def test_delete_requires_admin(self):
+        # Non-admins should not be able to delete via AJAX
+        self.client.login(username='user', password='userpass')
+        t = Task.objects.first()
+        resp = self.client.post(reverse('delete_task', args=[t.id]), {}, HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+        self.assertEqual(resp.status_code, 200)
+        self.assertFalse(resp.json().get('success'))
+        # task still exists
+        self.assertTrue(Task.objects.filter(id=t.id).exists())
+
+    def test_edit_allowed_for_owner(self):
+        # Create a new user and assign as owner of a task
+        owner = User.objects.create_user(username='owner', password='ownerpass')
+        task = Task.objects.first()
+        task.owner = owner
+        task.save()
+        self.client.login(username='owner', password='ownerpass')
+        resp = self.client.post(reverse('edit_task', args=[task.id]), {
+            'title': 'Owner Edited',
+            'platform': task.platform,
+            'location': task.location,
+            'status': task.status,
+            'start_time': task.start_time,
+            'end_time': task.end_time,
+            'retries': task.retries
+        }, HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+        self.assertEqual(resp.status_code, 200)
+        self.assertTrue(resp.json().get('success'))
+        task.refresh_from_db()
+        self.assertEqual(task.title, 'Owner Edited')

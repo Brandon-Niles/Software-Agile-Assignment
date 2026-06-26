@@ -48,7 +48,13 @@
         confirmBtn.dataset.bound = '1';
         confirmBtn.addEventListener('click', function() {
             if (!_deleteTaskId) return;
-            const csrf = document.cookie.match(/csrftoken=([^;]+)/)?.[1] || '';
+            // Prefer cookie, fall back to meta tag if cookie isn't set (some pages may not set the cookie)
+            var csrf = document.cookie.match(/csrftoken=([^;]+)/)?.[1] || '';
+            if(!csrf){
+                var meta = document.querySelector('meta[name="csrf-token"]');
+                if(meta && meta.getAttribute('content')) csrf = meta.getAttribute('content');
+            }
+            // Send a minimal JSON body so Content-Type matches body and Django sees the header
             fetch('/delete/' + _deleteTaskId + '/', {
                 method: 'POST',
                 headers: {
@@ -56,7 +62,8 @@
                     'X-Requested-With': 'XMLHttpRequest',
                     'Content-Type': 'application/json'
                 },
-                credentials: 'same-origin'
+                credentials: 'same-origin',
+                body: JSON.stringify({})
             }).then(function(r){
                 if(!r.ok){ return r.text().then(function(t){ throw new Error('HTTP ' + r.status + ': ' + t); }); }
                 return r.json();
